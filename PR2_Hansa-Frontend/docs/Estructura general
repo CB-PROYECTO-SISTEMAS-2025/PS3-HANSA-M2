@@ -1,0 +1,29 @@
+src/
+│
+├── app/                  # Setup general de la aplicación (router, providers, etc.)
+│   └── App.tsx           # Componente raíz
+│
+├── assets/               # Archivos estáticos (imágenes, fuentes, etc.)
+│
+├── features/             # Módulos funcionales (feature-based)
+│   ├── newFeature/       # Nuevo feature añadido
+│   │   ├── components/   # Componentes UI del nuevo feature
+│   │   ├── hooks/        # Custom hooks del nuevo feature
+│   │   ├── services/     # Llamadas a API del nuevo feature
+│   │   ├── types/        # Tipos y modelos del nuevo feature
+│   │   └── index.ts      # Entry point del nuevo feature
+│   └── ...               # Otros features
+│
+├── shared/               # Código reutilizable (UI, hooks, libs, utils)
+│   ├── components/       # Componentes reutilizables
+│   ├── hooks/            # Custom hooks reutilizables
+│   ├── libs/             # Librerías utilitarias (formateadores, validadores)
+│   ├── ui/               # Diseño base (botones, inputs, etc.)
+│   └── types/            # Tipos compartidos
+│
+├── styles/               # Estilos globales
+│   ├── themes/           # Temas (dark/light)
+│   └── index.css         # Estilos base
+│
+├── main.tsx              # Entry point de React
+└── vite-env.d.ts         # Tipado de Vite
