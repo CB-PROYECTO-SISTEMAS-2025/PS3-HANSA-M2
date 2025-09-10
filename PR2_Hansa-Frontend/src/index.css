@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+:root {
+    --color-primary: #9D0045; /* Color principal Univalle */
+    --color-primary-hover: #7A0035; /* Color hover Univalle */
+    --color-primarytwo: #C73872; /* Color secundario Univalle */
+    --color-primaryfaint: #f8dee8; /* Color secundario Univalle */
+    --color-secondary: #808185; /* Gris claro */
+    --color-secondarytwo: #424346; /* Gris oscuro */
+    --color-accent: #FF7E5F; /* Naranja */
+}
+.no-scroll {
+  overflow: hidden;
+}
