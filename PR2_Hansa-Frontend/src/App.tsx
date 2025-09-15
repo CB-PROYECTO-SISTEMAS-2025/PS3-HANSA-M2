@@ -11,6 +11,9 @@ import EditarPerfilPage from './pages/EditProfile';
 import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
 
+import ForgotPassword from './features/auth/forgotPassword/pages/ForgotPassword';
+import ResetPassword from './features/auth/forgotPassword/pages/ResetPassword';
+
 
 function App() {
   return (
@@ -20,6 +23,14 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/account/register" element={<Register />} />
         <Route path="/account/verify-code" element={<VerifyCode />} />
+
+
+        {/* Rutas cambio contraseña*/ }
+        <Route path="/account/forgot-password" element={<ForgotPassword />} />
+        <Route path="/account/reset-password" element={<ResetPassword />} />
+        
+
+
         <Route path="/projects" element={<Projects />} />
 
         {/* Rutas con Layout */}
@@ -50,6 +61,7 @@ function App() {
             }
           />
         </Route>
+        
       </Routes>
     </BrowserRouter>
   );

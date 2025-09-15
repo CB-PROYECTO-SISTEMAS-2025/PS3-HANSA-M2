@@ -14,9 +14,11 @@ const Login = () => {
   const { loading, error, handleLogin } = useAuthLogin();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    handleLogin(username, password, () => navigate("/account/verify-code"));
-  };
+  e.preventDefault();
+  handleLogin(username, password, () => {
+    navigate("/account/verify-code", { state: { username } });
+  });
+};
 
   return (
     <AuthLayout>
@@ -66,8 +68,8 @@ const Login = () => {
                 </div>
               </div>
             <div className="flex">
-              <Link to="#" className="text-sm text-[var(--color-primary)] hover:underline ml-auto">
-                  ¿Olvidaste tu contraseña?
+              <Link to="/account/forgot-password" className="text-sm text-[var(--color-primary)] hover:underline ml-auto">
+              ¿Olvidaste tu contraseña?
               </Link>
             </div>
             

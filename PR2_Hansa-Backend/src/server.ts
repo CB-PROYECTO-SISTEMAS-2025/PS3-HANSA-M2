@@ -11,6 +11,7 @@ import userRoutes from './routes/userRoutes';
 import uploadRoute from './routes/uploadRoute';
 //const uploadRoute = require("./routes/uploadRoute");
 //const auth = require("./middleware/auth");
+import passwordRoutes from './routes/password.routes';
 
 import fileRoutes from './routes/fileRoutes';
 import repositoryRoutes from './routes/repositoryRoutes';
@@ -48,3 +49,7 @@ mongoose
     app.listen(PORT, () => logger.info(`Servidor corriendo en puerto ${PORT}`));
   })
   .catch((err) => logger.info('Error al conectar a MongoDB:', err));
+
+
+app.use('/api/auth', authRoutes);          
+app.use('/api/auth', passwordRoutes);      
