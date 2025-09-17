@@ -11,10 +11,8 @@ import EditarPerfilPage from './pages/EditProfile';
 import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
 
-
 function App() {
   return (
-    
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -29,26 +27,7 @@ function App() {
           <Route path="/mis-repositorios" element={<MyRepositoriesPage />} />
           <Route path="/profile" element={<VistaPerfil />} />
           <Route path="/repositorio/:id" element={<FileUserRepos />} />
-          <Route
-            path="/editar-perfil"
-            element={
-              <EditarPerfilPage
-                onClose={() => {}}
-                onSave={() => {}}
-                initialData={{
-                  nombre: '',
-                  apellido: '',
-                  estado: '',
-                  profesion: '',
-                  institucion: '',
-                  ciudad: '',
-                  contacto: '',
-                  hobbies: [],
-                  profileImage: '',
-                }}
-              />
-            }
-          />
+          <Route path="/editar-perfil" element={<EditarPerfilPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
