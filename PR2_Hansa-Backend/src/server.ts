@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || 'http://localhost:5173',
-      'https://ps3-hansa-m2-1-backend.onrender.com' // Reemplaza con tu URL real de Vercel
+      'https://proyectoo-psi.vercel.app/' // URL de tu frontend en Vercel
     ],
     credentials: true,
   }),

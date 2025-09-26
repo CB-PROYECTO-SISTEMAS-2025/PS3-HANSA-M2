@@ -12,12 +12,12 @@ export const register = async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-      res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+      return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
     }
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      res.status(400).json({ message: 'El usuario o email ya están en uso.' });
+      return res.status(400).json({ message: 'El usuario o email ya están en uso.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -54,12 +54,12 @@ export const login = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ username });
     if (!user) {
-      res.status(400).json({ message: 'Credenciales inválidas.' });
+      return res.status(400).json({ message: 'Credenciales inválidas.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(400).json({ message: 'Credenciales inválidas.' });
+      return res.status(400).json({ message: 'Credenciales inválidas.' });
     }
     const token = jwt.sign(
       { id: user._id, username: user.username, email: user.email },
@@ -102,15 +102,15 @@ export const verifyCode = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ username });
     if (!user) {
-      res.status(400).json({ message: 'Usuario no encontrado.' });
+      return res.status(400).json({ message: 'Usuario no encontrado.' });
     }
 
     if (user.verificationCode !== code) {
-      res.status(400).json({ message: 'Código inválido.' });
+      return res.status(400).json({ message: 'Código inválido.' });
     }
 
     if (user.verificationCodeExpires && user.verificationCodeExpires < new Date()) {
-      res.status(400).json({ message: 'El código ha expirado.' });
+      return res.status(400).json({ message: 'El código ha expirado.' });
     }
 
     // Código correcto → Generamos JWT
