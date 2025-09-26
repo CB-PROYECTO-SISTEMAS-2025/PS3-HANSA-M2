@@ -20,7 +20,7 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: 'http://localhost:5173', // El frontend (React) corre en este puerto
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // El frontend (React) corre en este puerto
     credentials: true, // Si más adelante manejas cookies o cabeceras auth
   }),
 );
