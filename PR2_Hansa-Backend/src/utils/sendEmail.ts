@@ -12,8 +12,8 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   console.log('📧 Creando transporter...');
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,          // STARTTLS
-    secure: false,      // true solo si usas 465
+    port: 465,          // STARTTLS
+    secure: true,      // true solo si usas 465
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
