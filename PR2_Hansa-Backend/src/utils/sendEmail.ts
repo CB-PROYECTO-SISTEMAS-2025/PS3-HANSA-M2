@@ -46,11 +46,18 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   });
   
   try {
+    console.log('📧 Intentando enviar correo...');
     const result = await transporter.sendMail(mailOptions);
     console.log('📧 Correo enviado exitosamente:', result.messageId);
     console.log('📧 Respuesta completa:', result);
+    return result;
   } catch (error) {
     console.error('📧 Error al enviar correo:', error);
+    console.error('📧 Detalles del error:', {
+      message: error.message,
+      code: error.code,
+      response: error.response
+    });
     throw error;
   }
 };
