@@ -7,7 +7,7 @@ console.log('🚀 Configuración de API cargada');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // Tiempo de espera (opcional)
+  timeout: 30000, // Aumentado a 30 segundos para Render
   headers: {
     "Content-Type": "application/json",
   },
