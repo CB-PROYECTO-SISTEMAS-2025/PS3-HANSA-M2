@@ -10,6 +10,7 @@ export const useAuthLogin = () => {
       setLoading(true);
       setError(null);
       const data = await login(username, password);
+      localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.user.username);
       onSuccess();
     } catch (err: unknown) {

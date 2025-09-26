@@ -21,8 +21,8 @@ const app = express();
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      'https://proyectoo-psi.vercel.app/' // URL de tu frontend en Vercel
+      process.env.FRONTEND_URL || 'https://proyectoo-psi.vercel.app/'
+       // URL de tu frontend en Vercel
     ],
     credentials: true,
   }),
