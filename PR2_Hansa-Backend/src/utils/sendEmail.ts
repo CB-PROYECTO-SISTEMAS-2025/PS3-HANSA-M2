@@ -11,14 +11,16 @@ export const sendVerificationEmail = async (to: string, code: string) => {
 
   console.log('📧 Creando transporter...');
   const transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    host: 'smtp.gmail.com',
+    port: 587,          // STARTTLS
+    secure: false,      // true solo si usas 465
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    connectionTimeout: 10000, // 10 segundos
-    greetingTimeout: 10000,   // 10 segundos
-    socketTimeout: 10000,     // 10 segundos
+    connectionTimeout: 40000,
+    greetingTimeout: 40000,
+    socketTimeout: 40000,
   });
 
   const mailOptions = {
