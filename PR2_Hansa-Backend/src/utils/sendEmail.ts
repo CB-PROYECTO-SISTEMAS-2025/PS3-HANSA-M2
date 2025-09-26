@@ -1,10 +1,15 @@
 import nodemailer from 'nodemailer';
 
 export const sendVerificationEmail = async (to: string, code: string) => {
+  console.log('📧 Configurando envío de correo...');
+  console.log('📧 EMAIL_USER configurado:', !!process.env.EMAIL_USER);
+  console.log('📧 EMAIL_PASS configurado:', !!process.env.EMAIL_PASS);
+  
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     throw new Error('EMAIL_USER y EMAIL_PASS deben estar configurados');
   }
 
+  console.log('📧 Creando transporter...');
   const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
@@ -31,5 +36,10 @@ export const sendVerificationEmail = async (to: string, code: string) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  console.log('📧 Enviando correo...');
+  console.log('📧 Destinatario:', to);
+  console.log('📧 Código:', code);
+  
+  const result = await transporter.sendMail(mailOptions);
+  console.log('📧 Correo enviado exitosamente:', result.messageId);
 };
