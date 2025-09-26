@@ -51,12 +51,12 @@ export const sendVerificationEmail = async (to: string, code: string) => {
     console.log('📧 Correo enviado exitosamente:', result.messageId);
     console.log('📧 Respuesta completa:', result);
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('📧 Error al enviar correo:', error);
     console.error('📧 Detalles del error:', {
-      message: error.message,
-      code: error.code,
-      response: error.response
+      message: error?.message || 'Error desconocido',
+      code: error?.code || 'Sin código',
+      response: error?.response || 'Sin respuesta'
     });
     throw error;
   }
