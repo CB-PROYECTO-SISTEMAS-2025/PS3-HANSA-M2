@@ -4,24 +4,24 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   console.log('📧 Configurando envío de correo...');
   console.log('📧 EMAIL_USER configurado:', !!process.env.EMAIL_USER);
   console.log('📧 EMAIL_PASS configurado:', !!process.env.EMAIL_PASS);
-  
+
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     throw new Error('EMAIL_USER y EMAIL_PASS deben estar configurados');
   }
 
   console.log('📧 Creando transporter...');
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,          // STARTTLS
-    secure: true,      // true solo si usas 465
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    connectionTimeout: 40000,
-    greetingTimeout: 40000,
-    socketTimeout: 40000,
+    logger: true,   // agrega logs
+    debug: true,    // más detalles de la conexión SMTP
   });
+
 
   const mailOptions = {
     from: `"Hansa Sistema" <${process.env.EMAIL_USER}>`,
@@ -49,16 +49,16 @@ export const sendVerificationEmail = async (to: string, code: string) => {
     to: mailOptions.to,
     subject: mailOptions.subject
   });
-  
+
   try {
     console.log('📧 Intentando enviar correo...');
-    
+
     // Crear una promesa con timeout
     const sendPromise = transporter.sendMail(mailOptions);
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Timeout al enviar correo')), 50000)
     );
-    
+
     const result = await Promise.race([sendPromise, timeoutPromise]);
     console.log('📧 Correo enviado exitosamente:');
     console.log('📧 Respuesta completa:', result);
