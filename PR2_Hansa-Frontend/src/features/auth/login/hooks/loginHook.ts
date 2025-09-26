@@ -9,12 +9,20 @@ export const useAuthLogin = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Iniciando login...', { username });
+      console.log('🔐 Iniciando login...', { username });
       const data = await login(username, password);
-      console.log('Respuesta del login:', data);
+      console.log('✅ Respuesta del login:', data);
+      console.log('🔑 Token recibido:', data.token);
+      console.log('👤 Usuario recibido:', data.user);
+      
+      if (!data.token) {
+        throw new Error('No se recibió token del servidor');
+      }
+      
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.user.username);
-      console.log('Login exitoso, redirigiendo...');
+      console.log('💾 Datos guardados en localStorage');
+      console.log('🚀 Login exitoso, redirigiendo...');
       onSuccess();
     } catch (err: unknown) {
       console.error('Error en login:', err);
