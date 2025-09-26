@@ -130,6 +130,11 @@ Para subida de archivos:
 
 ## 🚨 Solución de Problemas
 
+### Error de compilación TypeScript en Render
+Si ves errores como "Could not find a declaration file for module 'express'":
+- **Solución**: Las dependencias `@types/*` y `typescript` deben estar en `dependencies`, no en `devDependencies`
+- **Ya solucionado**: El `package.json` ya está configurado correctamente
+
 ### Backend no inicia
 - Verifica que todas las variables de entorno estén configuradas
 - Revisa los logs en Render Dashboard
