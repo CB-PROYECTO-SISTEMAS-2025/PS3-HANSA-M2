@@ -28,8 +28,12 @@ api.interceptors.request.use(
 
 // Interceptor para manejar errores globalmente
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      console.log('Respuesta de API:', response);
+      return response;
+    },
     (error) => {
+      console.error('Error de API:', error);
       if (error.response?.status === 401) {
         console.error("No autorizado. Redirigiendo al login...");
         localStorage.removeItem("token");

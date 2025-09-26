@@ -6,7 +6,9 @@ export const verifyCode = async (username: string, code: string) => {
 };
 
 export const login = async (username: string, password: string) => {
+  console.log('Enviando petición de login a:', 'api/auth/login');
   const response = await api.post("api/auth/login", { username, password });
+  console.log('Respuesta completa:', response);
   return response.data;
 };
 
