@@ -20,8 +20,11 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // El frontend (React) corre en este puerto
-    credentials: true, // Si más adelante manejas cookies o cabeceras auth
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:5173',
+      'https://ps3-hansa-m2-1-backend.onrender.com' // Reemplaza con tu URL real de Vercel
+    ],
+    credentials: true,
   }),
 );
 app.use(express.json());
