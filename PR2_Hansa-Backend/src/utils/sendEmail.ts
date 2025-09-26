@@ -16,6 +16,9 @@ export const sendVerificationEmail = async (to: string, code: string) => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    connectionTimeout: 10000, // 10 segundos
+    greetingTimeout: 10000,   // 10 segundos
+    socketTimeout: 10000,     // 10 segundos
   });
 
   const mailOptions = {
@@ -47,7 +50,14 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   
   try {
     console.log('📧 Intentando enviar correo...');
-    const result = await transporter.sendMail(mailOptions);
+    
+    // Crear una promesa con timeout
+    const sendPromise = transporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout al enviar correo')), 50000)
+    );
+    
+    const result = await Promise.race([sendPromise, timeoutPromise]);
     console.log('📧 Correo enviado exitosamente:', result.messageId);
     console.log('📧 Respuesta completa:', result);
     return result;
