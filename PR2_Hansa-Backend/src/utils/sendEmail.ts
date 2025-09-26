@@ -60,7 +60,7 @@ export const sendVerificationEmail = async (to: string, code: string) => {
     );
     
     const result = await Promise.race([sendPromise, timeoutPromise]);
-    console.log('📧 Correo enviado exitosamente:', result.messageId);
+    console.log('📧 Correo enviado exitosamente:');
     console.log('📧 Respuesta completa:', result);
     return result;
   } catch (error: any) {
