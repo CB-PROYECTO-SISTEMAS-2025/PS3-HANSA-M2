@@ -10,7 +10,7 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   }
 
   console.log('📧 Creando transporter...');
-  const transporter = nodemailer.createTransport({
+  /*const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
@@ -20,7 +20,7 @@ export const sendVerificationEmail = async (to: string, code: string) => {
     },
     logger: true,   // agrega logs
     debug: true,    // más detalles de la conexión SMTP
-  });
+  });*/
 
 
   const mailOptions = {

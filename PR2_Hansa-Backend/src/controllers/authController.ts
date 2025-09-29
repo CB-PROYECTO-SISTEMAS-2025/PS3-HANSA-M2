@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import Repository from '../models/Repository';
-import { sendVerificationEmail } from '../utils/sendEmail';
+// import { sendVerificationEmail } from '../utils/sendEmail';
 import { logger } from '../utils/logger';
 
 export const register = async (req: Request, res: Response) => {
@@ -67,6 +67,7 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: '1d' },
     );
 
+    /*
     // Crear código de verificación
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 dígitos
     const expires = new Date();
@@ -87,6 +88,7 @@ export const login = async (req: Request, res: Response) => {
       logger.error('Error al enviar correo:', emailError);
       // Continuar sin fallar el login - el usuario puede ver el código en los logs
     }
+    */
     res.json({
       token,
       user: {
