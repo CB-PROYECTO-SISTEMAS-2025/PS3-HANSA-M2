@@ -17,7 +17,7 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Formulario enviado', { username, password });
-    handleLogin(username, password, () => navigate("/account/verify-code"));
+    handleLogin(username, password, () => navigate("/file-repository"));
   };
 
   return (
