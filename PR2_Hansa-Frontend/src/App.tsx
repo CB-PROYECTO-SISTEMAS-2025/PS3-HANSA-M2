@@ -10,6 +10,9 @@ import VistaPerfil from './pages/Profile';
 import EditarPerfilPage from './pages/EditProfile';
 import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
+import NotificationsPage from './pages/NotificationsPage'; 
+import UsersPage from './pages/UsersPage';
+
 
 function App() {
   return (
@@ -28,6 +31,8 @@ function App() {
           <Route path="/profile" element={<VistaPerfil />} />
           <Route path="/repositorio/:id" element={<FileUserRepos />} />
           <Route path="/editar-perfil" element={<EditarPerfilPage />} />
+          <Route path="/notificaciones" element={<NotificationsPage />} /> 
+          <Route path="/usuarios" element={<UsersPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
