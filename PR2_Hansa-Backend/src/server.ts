@@ -21,7 +21,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL || 'https://proyectoo-psi.vercel.app/',
+      process.env.FRONTEND_URL || 'https://proyectoo-psi.vercel.app',
       /^https:\/\/.*\.vercel\.app$/
     ],
     credentials: true,
