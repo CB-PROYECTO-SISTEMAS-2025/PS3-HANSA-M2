@@ -1,14 +1,22 @@
-// routes/repositoryRoutes.ts
-
-import express from 'express';
-import { getPersonalRepository, getFilesByRepository } from '../controllers/repositoryController';
-import { verifyToken } from '../middleware/auth';
-import { createRepository, getMyRepositories } from '../controllers/repositoryController';
+import express from "express";
+import { verifyToken } from "../middleware/auth";
+import {
+  createRepository,
+  getMyRepositories,
+  getFilesByRepository,
+  deleteRepository,
+  getPublicRepositories,
+} from "../controllers/repositoryController";
 
 const router = express.Router();
-router.get('/repositorio/:id', verifyToken, getFilesByRepository);
-router.get('/personal', verifyToken, getPersonalRepository);
-router.post('/', verifyToken, createRepository);
-router.get('/mis-repositorios', verifyToken, getMyRepositories);
+
+// CRUD básico
+router.post("/", verifyToken, createRepository);
+router.get("/mis-repositorios", verifyToken, getMyRepositories);
+router.get("/repositorio/:id", verifyToken, getFilesByRepository);
+router.delete("/:id", verifyToken, deleteRepository);
+
+// Nuevo endpoint público
+router.get("/publicos", getPublicRepositories);
 
 export default router;

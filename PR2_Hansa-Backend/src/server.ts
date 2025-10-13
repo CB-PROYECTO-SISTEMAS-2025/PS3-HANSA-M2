@@ -20,8 +20,8 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: 'http://localhost:5173', // El frontend (React) corre en este puerto
-    credentials: true, // Si más adelante manejas cookies o cabeceras auth
+    origin: 'http://localhost:5173', 
+    credentials: true, 
   }),
 );
 app.use(express.json());
@@ -37,7 +37,7 @@ app.use(
 app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/repositorios', repositoryRoutes);
-app.use('/api/users', userRoutes); // ✅ correcto
+app.use('/api/users', userRoutes); 
 app.use('/api/upload', uploadRoute);
 
 mongoose
