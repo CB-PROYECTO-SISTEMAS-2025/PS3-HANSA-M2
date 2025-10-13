@@ -12,6 +12,7 @@ import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
 import NotificationsPage from './pages/NotificationsPage'; 
 import UsersPage from './pages/UsersPage';
+import CrearRepositorioPage from "./pages/CrearRepositorioPage";
 
 
 function App() {
@@ -33,6 +34,8 @@ function App() {
           <Route path="/editar-perfil" element={<EditarPerfilPage />} />
           <Route path="/notificaciones" element={<NotificationsPage />} /> 
           <Route path="/usuarios" element={<UsersPage />} />
+          <Route path="/crear-repositorio" element={<CrearRepositorioPage />} />
+
         </Route>
       </Routes>
     </BrowserRouter>
