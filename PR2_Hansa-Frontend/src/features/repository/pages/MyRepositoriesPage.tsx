@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import CreateRepositoryForm from "../components/CreateRepositoryForm"; // Ajusta la ruta según tu proyecto
 import { Link } from "react-router-dom";
+import api from "../../../utils/api";
 
 interface Repository {
   _id: string;
@@ -17,16 +18,9 @@ const MyRepositoriesPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const fetchRepositorios = async () => {
-    const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:5000/api/repositorios/mis-repositorios", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setRepositorios(data);
+      const response = await api.get("api/repositorios/mis-repositorios");
+      setRepositorios(response.data);
     } catch (err) {
       console.error(err);
       alert("Error al cargar los repositorios.");

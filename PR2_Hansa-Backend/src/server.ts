@@ -22,6 +22,7 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || 'https://proyectoo-psi.vercel.app',
+      'https://pr-2-hansa-frontend-two.vercel.app',
       /^https:\/\/.*\.vercel\.app$/
     ],
     credentials: true,
