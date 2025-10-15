@@ -12,6 +12,7 @@ import {
   FiAward,
 } from "react-icons/fi";
 import EditarPerfilModal from "./EditProfile";
+import api from "../utils/api";
 
 const VistaPerfil = () => {
   const navigate = useNavigate();
@@ -21,9 +22,9 @@ const VistaPerfil = () => {
     const userId = user.id; // o usa contexto o props
 
     if (userId) {
-      fetch(`http://localhost:5000/api/users/${userId}`)
-        .then((res) => res.json())
-        .then((data) => {
+      api.get(`api/users/${userId}`)
+        .then((response) => {
+          const data = response.data;
           setPerfil({
             nombre: data.nombre || "",
             apellido: data.apellido || "",
