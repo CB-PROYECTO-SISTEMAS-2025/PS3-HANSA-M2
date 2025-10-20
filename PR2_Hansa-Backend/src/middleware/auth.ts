@@ -1,39 +1,56 @@
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env";
 
-interface JwtPayload {
+export interface JwtPayload {
   id: string;
   email: string;
+  role?: string; // opcional, por si lo agregas después
 }
 
-// Extiende la interfaz Request para incluir 'user'
+// Extiende la Request para incluir 'user'
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: string;
-        email: string;
-      };
+      user?: JwtPayload;
     }
   }
 }
 
+/**
+ * Verifica el JWT y agrega req.user
+ */
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-
-  if (!token) {
-    res.status(401).json({ message: 'Token requerido' });
-    return;
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
-    req.user = { id: decoded.id, email: decoded.email };
+    const header = req.headers["authorization"];
+    if (!header || !header.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Token requerido (Bearer <token>)" });
+      return;
+    }
+
+    const token = header.split(" ")[1];
+    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+
+    req.user = decoded;
     next();
-  } catch (err) {
-    res.status(403).json({ message: 'Token inválido' });
-    return;
+  } catch (err: any) {
+    if (err.name === "TokenExpiredError") {
+      res.status(401).json({ message: "Token expirado" });
+      return;
+    }
+    res.status(403).json({ message: "Token inválido" });
   }
+};
+export const requireRole = (...rolesPermitidos: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !req.user.role) {
+      res.status(403).json({ message: "Usuario no autenticado o sin rol asignado" });
+      return;
+    }
+    if (!rolesPermitidos.includes(req.user.role)) {
+      res.status(403).json({ message: "No tienes permisos suficientes" });
+      return;
+    }
+    next();
+  };
 };

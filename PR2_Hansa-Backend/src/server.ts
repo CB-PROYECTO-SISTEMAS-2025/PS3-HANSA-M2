@@ -1,50 +1,48 @@
 /* eslint-disable prettier/prettier */
 // src/server.ts
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import morgan from 'morgan';
-import { logger } from './utils/logger';
-import mongoose from 'mongoose';
-import authRoutes from './routes/authRoutes';
-import userRoutes from './routes/userRoutes';
-import uploadRoute from './routes/uploadRoute';
-//const uploadRoute = require("./routes/uploadRoute");
-//const auth = require("./middleware/auth");
-
-import fileRoutes from './routes/fileRoutes';
-import repositoryRoutes from './routes/repositoryRoutes';
-
+import dotenv from "dotenv";
 dotenv.config();
 
-const app = express();
-app.use(
-  cors({
-    origin: 'http://localhost:5173', 
-    credentials: true, 
-  }),
-);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(
-  morgan('combined', {
-    stream: {
-      write: (message: string) => logger.info(message.trim()),
-    },
-  }),
-);
+import { connectMongo, disconnectMongo } from "./config/db";
+import { env } from "./config/env";
+import { logger } from "./utils/logger";
+import app from "./app";
 
-app.use('/api/auth', authRoutes);
-app.use('/api/files', fileRoutes);
-app.use('/api/repositorios', repositoryRoutes);
-app.use('/api/users', userRoutes); 
-app.use('/api/upload', uploadRoute);
+async function bootstrap() {
+  try {
+    await connectMongo();
+    const PORT = env.PORT;
+    const server = app.listen(PORT, () => logger.info(` Server listening on port ${PORT}`));
 
-mongoose
-  .connect(process.env.MONGO_URI!)
-  .then(() => {
-    logger.info('MongoDB conectado');
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => logger.info(`Servidor corriendo en puerto ${PORT}`));
-  })
-  .catch((err) => logger.info('Error al conectar a MongoDB:', err));
+    // Cierre ordenado
+    const shutdown = async (signal: string) => {
+      try {
+        logger.warn(` Received ${signal}, shutting down...`);
+        server.close(async () => {
+          await disconnectMongo();
+          logger.info("MongoDB disconnected");
+          process.exit(0);
+        });
+      } catch (e) {
+        logger.error(e);
+        process.exit(1);
+      }
+    };
+
+    process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("uncaughtException", (err) => {
+      logger.error("Uncaught Exception", err);
+      shutdown("uncaughtException");
+    });
+    process.on("unhandledRejection", (reason) => {
+      logger.error("Unhandled Rejection", reason);
+      shutdown("unhandledRejection");
+    });
+  } catch (err) {
+    logger.error("❌ Fatal error on bootstrap", err);
+    process.exit(1);
+  }
+}
+
+bootstrap();

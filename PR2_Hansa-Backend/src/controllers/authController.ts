@@ -1,140 +1,181 @@
 // src/controllers/authController.ts
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import Repository from '../models/Repository';
-import { sendVerificationEmail } from '../utils/sendEmail';
-import { logger } from '../utils/logger';
+import { Request, Response, RequestHandler } from "express";
+import bcrypt from "bcryptjs";
+import jwt, { SignOptions, Secret } from "jsonwebtoken";
+import crypto from "crypto";
+import User from "../models/User";
+import Repository from "../models/Repository";
+import { sendVerificationEmail } from "../utils/sendEmail";
+import { logger } from "../utils/logger";
+import { env } from "../config/env";
+import mongoose from "mongoose";
 
-export const register = async (req: Request, res: Response) => {
+// Helper: genera código 2FA
+function generateCode6() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Helper: firma JWT app
+function signAppJwt(
+  payload: Record<string, any>,
+  expiresIn: SignOptions["expiresIn"] = "1d",
+) {
+  // Cast env.JWT_SECRET to Secret to satisfy typings from @types/jsonwebtoken
+  return jwt.sign(payload, env.JWT_SECRET as Secret, { expiresIn });
+}
+
+/**
+ * POST /api/auth/register
+ * Crea usuario + repo personal (typeRepo="simple", mode="personal")
+ */
+export const register: RequestHandler = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-      res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+      res.status(400).json({ message: "Todos los campos son obligatorios." });
+      return;
     }
 
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-      res.status(400).json({ message: 'El usuario o email ya están en uso.' });
+    const existing = await User.findOne({ $or: [{ username }, { email }] });
+    if (existing) {
+      res.status(400).json({ message: "El usuario o email ya están en uso." });
+      return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, email, password: hashedPassword });
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, email, password: hashed });
     await newUser.save();
 
-    // 👇 Crear el repositorio personal del usuario
-    const personalRepo = new Repository({
+    // Crear repositorio personal alineado a modelos nuevos
+  // newUser._id can be unknown in some mongoose typings; cast to string|ObjectId for safety
+  const ownerId = new mongoose.Types.ObjectId(newUser._id as string);
+    const personalRepo = await Repository.create({
       name: `Repositorio de ${username}`,
-      description: 'Repositorio personal del usuario',
-      type: 'personal',
-      linkedToUser: newUser._id,
-      owner: newUser._id,
-      members: [newUser._id],
+      description: "Repositorio personal del usuario",
+      typeRepo: "simple",
+      mode: "personal",
+      privacy: "private", // personal por defecto privado (ajústalo si quieres público)
+      owner: ownerId,
+      participants: [{ user: ownerId, role: "owner", status: "active" }],
       files: [],
+      tags: [],
     });
 
-    await personalRepo.save();
-
-    // 👇 Vincular el repositorio al usuario
-    newUser.repositories.push(personalRepo._id as (typeof newUser.repositories)[0]);
+    // Vincular repo al usuario
+  // personalRepo._id may be typed as unknown; cast to Types.ObjectId before pushing
+  newUser.repositories.push(personalRepo._id as mongoose.Types.ObjectId);
     await newUser.save();
 
-    res.status(201).json({ message: 'Usuario registrado exitosamente.' });
+  res.status(201).json({ message: "Usuario registrado exitosamente." });
+  return;
   } catch (err) {
     logger.error(err);
-    res.status(500).json({ message: 'Error en el servidor.' });
+  res.status(500).json({ message: "Error en el servidor." });
+  return;
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+/**
+ * POST /api/auth/login
+ * 1er paso: valida credenciales, genera código 2FA y devuelve loginId temporal.
+ * NO devuelve el JWT final aquí (buena práctica 2FA).
+ */
+export const login: RequestHandler = async (req, res) => {
   try {
     const { username, password } = req.body;
+    if (!username || !password) {
+      res.status(400).json({ message: "Usuario y contraseña son requeridos." });
+      return;
+    }
 
     const user = await User.findOne({ username });
     if (!user) {
-      res.status(400).json({ message: 'Credenciales inválidas.' });
+      res.status(400).json({ message: "Credenciales inválidas." });
+      return;
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      res.status(400).json({ message: 'Credenciales inválidas.' });
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      res.status(400).json({ message: "Credenciales inválidas." });
+      return;
     }
-    const token = jwt.sign(
-      { id: user._id, username: user.username, email: user.email },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1d' },
-    );
 
-    // Crear código de verificación
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 dígitos
-    const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 10); // Código válido 10 minutos
+    const code = generateCode6();
+    const expires = new Date(Date.now() + env.TWOFA_TTL_MIN * 60 * 1000);
 
-    // Guardar en el usuario
-    user.verificationCode = verificationCode;
+    user.verificationCode = code;
     user.verificationCodeExpires = expires;
     await user.save();
 
-    // Enviar el correo
-    logger.error('Enviando correo...');
-    logger.error(user.email, verificationCode);
-    await sendVerificationEmail(user.email, verificationCode);
-    logger.error(verificationCode);
+    // loginId simple (no-critico): hash efímero para correlacionar el flujo
+    const loginId = crypto.randomBytes(16).toString("hex");
+
+    logger.info(`Enviando código 2FA a ${user.email}`);
+    await sendVerificationEmail(user.email, code);
+
     res.json({
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      loginId,
+      twoFA: true,
+      message: "Se envió el código de verificación a tu correo.",
     });
+    return;
   } catch (err) {
     logger.error(err);
-    res.status(500).json({ message: 'Error en el servidorakjshfdkshfa.' });
+  res.status(500).json({ message: "Error en el servidor." });
+  return;
   }
 };
 
-export const verifyCode = async (req: Request, res: Response) => {
+/**
+ * POST /api/auth/verify-code
+ * 2do paso: valida código y retorna el JWT final.
+ */
+export const verifyCode: RequestHandler = async (req, res) => {
   try {
     const { username, code } = req.body;
+    if (!username || !code) {
+      res.status(400).json({ message: "Datos incompletos." });
+      return;
+    }
 
     const user = await User.findOne({ username });
     if (!user) {
-      res.status(400).json({ message: 'Usuario no encontrado.' });
+      res.status(400).json({ message: "Usuario no encontrado." });
+      return;
     }
 
     if (user.verificationCode !== code) {
-      res.status(400).json({ message: 'Código inválido.' });
+  res.status(400).json({ message: "Código inválido." });
+  return;
     }
 
     if (user.verificationCodeExpires && user.verificationCodeExpires < new Date()) {
-      res.status(400).json({ message: 'El código ha expirado.' });
+  res.status(400).json({ message: "El código ha expirado." });
+  return;
     }
 
-    // Código correcto → Generamos JWT
-    const token = jwt.sign(
-      { id: user._id, username: user.username },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1d' },
-    );
+    // OK => genera JWT
+    const token = signAppJwt({
+      id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      // role: user.userType, // si decides firmar el rol
+    });
 
-    // Limpiar el código de verificación
+    // Limpia 2FA
     user.verificationCode = undefined;
     user.verificationCodeExpires = undefined;
     await user.save();
 
     res.json({
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: { id: user._id, username: user.username, email: user.email },
     });
+    return;
   } catch (err) {
     logger.error(err);
-    res.status(500).json({ message: 'Error en el servidor.' });
+  res.status(500).json({ message: "Error en el servidor." });
+  return;
   }
 };

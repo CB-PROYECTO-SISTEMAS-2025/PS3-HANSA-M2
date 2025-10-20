@@ -1,11 +1,11 @@
-// src/routes/authRoutes.ts
-import express from 'express';
-import { register, login, verifyCode } from '../controllers/authController';
+import express from "express";
+import { register, login, verifyCode } from "../controllers/authController";
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/verifyCode', verifyCode);
+router.post("/register", register);
+router.post("/login", login);
+// estandariza snake-case en endpoint
+router.post("/verify-code", verifyCode);
 
 export default router;
