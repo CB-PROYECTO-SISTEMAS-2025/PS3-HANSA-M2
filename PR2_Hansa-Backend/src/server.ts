@@ -40,7 +40,7 @@ app.use(
 app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/repositorios', repositoryRoutes);
-app.use('/api/users', userRoutes); // ✅ correcto
+app.use('/api/users', userRoutes); 
 app.use('/api/upload', uploadRoute);
 
 mongoose

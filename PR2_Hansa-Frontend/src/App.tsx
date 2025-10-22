@@ -10,11 +10,13 @@ import VistaPerfil from './pages/Profile';
 import EditarPerfilPage from './pages/EditProfile';
 import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
+import NotificationsPage from './pages/NotificationsPage'; 
+import UsersPage from './pages/UsersPage';
+import CrearRepositorioPage from "./pages/CrearRepositorioPage";
 
 
 function App() {
   return (
-    
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -29,26 +31,11 @@ function App() {
           <Route path="/mis-repositorios" element={<MyRepositoriesPage />} />
           <Route path="/profile" element={<VistaPerfil />} />
           <Route path="/repositorio/:id" element={<FileUserRepos />} />
-          <Route
-            path="/editar-perfil"
-            element={
-              <EditarPerfilPage
-                onClose={() => {}}
-                onSave={() => {}}
-                initialData={{
-                  nombre: '',
-                  apellido: '',
-                  estado: '',
-                  profesion: '',
-                  institucion: '',
-                  ciudad: '',
-                  contacto: '',
-                  hobbies: [],
-                  profileImage: '',
-                }}
-              />
-            }
-          />
+          <Route path="/editar-perfil" element={<EditarPerfilPage />} />
+          <Route path="/notificaciones" element={<NotificationsPage />} /> 
+          <Route path="/usuarios" element={<UsersPage />} />
+          <Route path="/crear-repositorio" element={<CrearRepositorioPage />} />
+
         </Route>
       </Routes>
     </BrowserRouter>
