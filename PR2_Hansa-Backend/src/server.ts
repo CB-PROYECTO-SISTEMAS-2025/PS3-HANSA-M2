@@ -20,8 +20,11 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: 'http://localhost:5173', 
-    credentials: true, 
+    origin: [
+      process.env.FRONTEND_URL || 'https://proyectoo-psi.vercel.app/',
+      /^https:\/\/.*\.vercel\.app$/
+    ],
+    credentials: true,
   }),
 );
 app.use(express.json());
@@ -41,7 +44,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoute);
 
 mongoose
-  .connect(process.env.MONGO_URI!)
+  .connect(process.env.MONGODB_URI!)
   .then(() => {
     logger.info('MongoDB conectado');
     const PORT = process.env.PORT || 5000;

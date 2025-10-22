@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { FiUser, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 
 const Login = () => {
+  console.log('Componente Login cargado');
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +16,7 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('Formulario enviado', { username, password });
     handleLogin(username, password, () => navigate("/account/verify-code"));
   };
 

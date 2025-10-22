@@ -78,10 +78,15 @@ export const login = async (req: Request, res: Response) => {
     await user.save();
 
     // Enviar el correo
-    logger.error('Enviando correo...');
-    logger.error(user.email, verificationCode);
-    await sendVerificationEmail(user.email, verificationCode);
-    logger.error(verificationCode);
+    logger.info('Enviando correo de verificación...');
+    logger.info(`Email: ${user.email}, Código: ${verificationCode}`);
+    try {
+      await sendVerificationEmail(user.email, verificationCode);
+      logger.info('Correo enviado exitosamente');
+    } catch (emailError) {
+      logger.error('Error al enviar correo:', emailError);
+      // Continuar sin fallar el login - el usuario puede ver el código en los logs
+    }
     res.json({
       token,
       user: {

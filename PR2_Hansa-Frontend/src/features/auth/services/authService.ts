@@ -6,7 +6,13 @@ export const verifyCode = async (username: string, code: string) => {
 };
 
 export const login = async (username: string, password: string) => {
-  const response = await api.post("api/auth/login", { username, password });
+  const url = 'api/auth/login';
+  console.log('🌐 Enviando petición de login a:', url);
+  console.log('🌐 URL completa:', `${import.meta.env.VITE_API_BASE_URL}/${url}`);
+  console.log('🌐 Datos enviados:', { username, password: '***' });
+  
+  const response = await api.post(url, { username, password });
+  console.log('✅ Respuesta completa:', response);
   return response.data;
 };
 
