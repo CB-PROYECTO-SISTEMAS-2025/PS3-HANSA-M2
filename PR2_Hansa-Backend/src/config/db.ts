@@ -1,10 +1,12 @@
 // src/config/db.ts
 import mongoose from "mongoose";
+import { Db } from 'mongodb';
 import { env } from "./env";
 import { logger } from "../utils/logger";
 
 mongoose.set("strictQuery", true);
-
+let db: Db;
+export const getDb = (): Db => { if (!db) { db = mongoose.connection.db; } return db; };
 export async function connectMongo(retries = 3, delayMs = 1500): Promise<typeof mongoose> {
   const uri = env.MONGO_URI;
 

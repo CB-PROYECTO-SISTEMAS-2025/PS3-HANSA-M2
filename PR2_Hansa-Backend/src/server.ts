@@ -3,14 +3,14 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { connectMongo, disconnectMongo } from "./config/db";
+import { connectMongo, disconnectMongo,getDb } from "./config/db";
 import { env } from "./config/env";
 import { logger } from "./utils/logger";
 import app from "./app";
 
 async function bootstrap() {
   try {
-    await connectMongo();
+    await getDb();
     const PORT = env.PORT;
     const server = app.listen(PORT, () => logger.info(` Server listening on port ${PORT}`));
 

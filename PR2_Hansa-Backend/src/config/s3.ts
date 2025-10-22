@@ -11,4 +11,4 @@ export const s3Client =
           secretAccessKey: env.AWS_SECRET_ACCESS_KEY!,
         },
       })
-    : undefined; // si no hay envs, no inicializa (dev sin S3)
+    : undefined;
