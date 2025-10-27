@@ -12,6 +12,11 @@ import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
 import NotificationsPage from './pages/NotificationsPage'; 
 import UsersPage from './pages/UsersPage';
+import ResetPassword from './features/auth/resetPassword/pages/ResetPassword';
+import RequestReset from './features/auth/resetPassword/pages/RequestReset';
+import CreateRepositoryPage from './features/repository/pages/CreateRepositoryPage';
+import RepositoryDetailPage from './features/repository/components/RepositoryDetailTabs';
+
 
 
 function App() {
@@ -22,6 +27,8 @@ function App() {
         <Route path="/account/register" element={<Register />} />
         <Route path="/account/verify-code" element={<VerifyCode />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/account/reset" element={<RequestReset />} />
+        <Route path="/account/reset-password" element={<ResetPassword />} />
 
         {/* Rutas con Layout */}
         <Route element={<Layout />}>
@@ -29,10 +36,12 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/mis-repositorios" element={<MyRepositoriesPage />} />
           <Route path="/profile" element={<VistaPerfil />} />
-          <Route path="/repositorio/:id" element={<FileUserRepos />} />
           <Route path="/editar-perfil" element={<EditarPerfilPage />} />
           <Route path="/notificaciones" element={<NotificationsPage />} /> 
           <Route path="/usuarios" element={<UsersPage />} />
+          <Route path="/repositorio/nuevo" element={<CreateRepositoryPage />} />
+          <Route path="/repositorio/:id" element={<RepositoryDetailPage />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

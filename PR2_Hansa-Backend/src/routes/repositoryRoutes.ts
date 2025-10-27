@@ -6,6 +6,7 @@ import {
   getFilesByRepository,
   deleteRepository,
   getPublicRepositories,
+  getRepositoryById,
 } from "../controllers/repositoryController";
 
 const router = express.Router();
@@ -18,6 +19,8 @@ router.get("/mis-repositorios", verifyToken, getMyRepositories);
 
 // Archivos (vista rápida por GridFS; opcional)
 router.get("/repositorio/:id", verifyToken, getFilesByRepository);
+// Repositorio por ID
+router.get("/:id", verifyToken, getRepositoryById);
 
 // Eliminar (solo owner)
 router.delete("/:id", verifyToken, deleteRepository);

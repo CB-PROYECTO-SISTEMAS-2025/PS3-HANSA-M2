@@ -21,7 +21,7 @@ const SidebarNavigation: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) =>
 
   const menuItems = [
     { id: 1, icon: <FiHome className="w-5 h-5" />, label: "Inicio", onClick: () => navigate("/home") },
-    { id: 2, icon: <FiFolder className="w-5 h-5" />, label: "Mis Repositorios", onClick: () => navigate("/file-repository") },
+    { id: 2, icon: <FiFolder className="w-5 h-5" />, label: "Mis Repositorios", onClick: () => navigate("/mis-repositorios") },
     { id: 3, icon: <FiBell className="w-5 h-5" />, label: "Notificaciones", onClick: () => navigate("/notificaciones") },
     { id: 4, icon: <FiUsers className="w-5 h-5" />, label: "Usuarios", onClick: () => navigate("/usuarios") },
     { id: 5, icon: <FiUser className="w-5 h-5" />, label: "Mi Perfil", onClick: handleNavigateProfile },

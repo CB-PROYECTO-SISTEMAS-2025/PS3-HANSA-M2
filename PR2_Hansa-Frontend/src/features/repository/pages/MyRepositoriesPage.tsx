@@ -1,110 +1,165 @@
 import React, { useEffect, useState } from "react";
-import CreateRepositoryForm from "../components/CreateRepositoryForm"; // Ajusta la ruta según tu proyecto
 import { Link } from "react-router-dom";
+import api from "../../../utils/api";
 
 interface Repository {
   _id: string;
   name: string;
   description?: string;
-  type: string;
-  owner: string;
-  members: string[];
+  typeRepo: "simple" | "creator";
+  mode?: "personal" | "grupal";
+  privacy?: "public" | "private";
+  owner: { _id: string; username: string };
+  participants: { user: { _id: string; username: string }; role: string }[];
+  fileCount?: number;
   createdAt: string;
 }
 
 const MyRepositoriesPage: React.FC = () => {
-  const [repositorios, setRepositorios] = useState<Repository[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [reposOwner, setReposOwner] = useState<Repository[]>([]);
+  const [reposMember, setReposMember] = useState<Repository[]>([]);
+  const [summary, setSummary] = useState({ total: 0, owner: 0, member: 0, files: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const fetchRepositorios = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch("http://localhost:5000/api/repositorios/mis-repositorios", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setRepositorios(data);
-    } catch (err) {
-      console.error(err);
-      alert("Error al cargar los repositorios.");
-    }
-  };
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    fetchRepositorios();
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get("/api/repositorios/mis-repositorios", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const ownerRepos = res.data?.ownerRepos || [];
+        const memberRepos = res.data?.memberRepos || [];
+        const totals = res.data?.totals || { total: 0, owner: 0, member: 0, files: 0 };
+
+        setReposOwner(ownerRepos);
+        setReposMember(memberRepos);
+        setSummary(totals);
+
+      } catch (err) {
+        console.error("Error cargando repositorios:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const handleOpenModal = () => {
-    setModalOpen(true);
-  };
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
 
-  // Callback que pasa CreateRepositoryForm para cuando se crea un repo:
-  const onCreateSuccess = () => {
-    fetchRepositorios();
-    handleCloseModal();
-  };
+
+
+  if (loading) return <p className="text-center mt-10">Cargando repositorios...</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-white max-w-5xl mx-auto">
-      <div className="flex items-center mb-6 relative">
-        <h1 className="text-3xl font-bold ">Mis Repositorios</h1>
-        <div className="ml-auto">
-          <button
-            onClick={handleOpenModal}
-            className="bg-[var(--color-primary)] text-white px-6 py-2 rounded hover:bg-opacity-30 transition"
-          >
-            Crear Repositorio
-          </button>
+    <div className="min-h-screen p-6 bg-gray-50 max-w-6xl mx-auto">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-[var(--color-primary)]">Mis Repositorios</h1>
+        <Link
+  to="/repositorio/nuevo"
+  className="bg-[var(--color-primary)] text-white px-6 py-2 rounded hover:bg-opacity-30 transition"
+>
+  Crear Repositorio
+</Link>
+
+      </div>
+
+      {/* DASHBOARD RESUMEN */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div className="bg-white p-4 rounded-xl shadow text-center">
+          <h3 className="text-sm text-gray-500">Total</h3>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.total}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow text-center">
+          <h3 className="text-sm text-gray-500">Propietario</h3>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.owner}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow text-center">
+          <h3 className="text-sm text-gray-500">Miembro</h3>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.member}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow text-center">
+          <h3 className="text-sm text-gray-500">Archivos</h3>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.files}</p>
         </div>
       </div>
 
-
-      {/* Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.3)] backdrop-blur-sm">
-          <div className="relative max-w-xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-            {/* Botón cerrar */}
-            <button
-              onClick={handleCloseModal}
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-xl font-bold"
-              aria-label="Cerrar modal"
-            >
-              ×
-            </button>
-
-            {/* Formulario dentro del modal */}
-            <CreateRepositoryForm onSuccess={onCreateSuccess} />
+      {/* SECCIÓN: MIS REPOS PROPIOS */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Repositorios Propios</h2>
+        {reposOwner.length === 0 ? (
+          <p className="text-gray-600">Aún no tienes repositorios propios.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {reposOwner
+              .sort((a, b) =>
+                a.mode === "personal" && b.mode !== "personal"
+                  ? -1
+                  : a.mode !== "personal" && b.mode === "personal"
+                  ? 1
+                  : 0
+              )
+              .map((repo) => (
+                <Link to={`/repositorio/${repo._id}`} key={repo._id}>
+                  <div className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 border-[var(--color-primary)]">
+                    <h3 className="font-semibold text-[var(--color-primary)] text-lg mb-1">
+                      {repo.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                      {repo.description || "Sin descripción"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"} •{" "}
+                      {repo.mode || "—"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Archivos: {repo.fileCount || 0} • Creado:{" "}
+                      {new Date(repo.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Link>
+              ))}
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
-      {/* Lista de repositorios */}
-      <div className="mt-10">
-        <h2 className="text-2xl font-semibold mb-4">Repositorios existentes</h2>
-        <div className="grid gap-4">
-          {repositorios.map((repo) => (
-            <Link to={`/repositorio/${repo._id}`} key={repo._id}>
-              <div className="bg-white p-4 rounded shadow hover:bg-gray-50 cursor-pointer transition">
-                <h3 className="text-xl font-bold text-gray-800">{repo.name}</h3>
-                <p className="text-sm text-gray-600">{repo.description || "Sin descripción"}</p>
-                <p className="text-xs text-gray-500">Tipo: {repo.type}</p>
-                <p className="text-xs text-gray-500">Participantes: {repo.members.length}</p>
-              </div>
-            </Link>
-          ))}
+      {/* SECCIÓN: DONDE SOY MIEMBRO */}
+      <section>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Repositorios donde soy miembro</h2>
+        {reposMember.length === 0 ? (
+          <p className="text-gray-600">No participas en otros repositorios todavía.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {reposMember
+              .sort((a, b) => (a.typeRepo === "creator" ? -1 : b.typeRepo === "creator" ? 1 : 0))
+              .map((repo) => (
+                <Link to={`/repositorio/${repo._id}`} key={repo._id}>
+                  <div className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 border-[var(--color-primarytwo)]">
+                    <h3 className="font-semibold text-[var(--color-primary)] text-lg mb-1">
+                      {repo.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                      {repo.description || "Sin descripción"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Dueño: {repo.owner?.username || "Desconocido"}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+          </div>
+        )}
+      </section>
 
-          {repositorios.length === 0 && (
-            <p className="text-gray-500">No estás en ningún repositorio aún.</p>
-          )}
-        </div>
-      </div>
+      
     </div>
   );
 };

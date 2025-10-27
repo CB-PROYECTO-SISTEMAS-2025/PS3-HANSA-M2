@@ -1,26 +1,29 @@
 /* eslint-disable prettier/prettier */
-// src/server.ts
 import dotenv from "dotenv";
 dotenv.config();
 
-import { connectMongo, disconnectMongo,getDb } from "./config/db";
+import { connectMongo, disconnectMongo } from "./config/db";
 import { env } from "./config/env";
 import { logger } from "./utils/logger";
 import app from "./app";
 
 async function bootstrap() {
   try {
-    await getDb();
+    // 🔥 ESTA LÍNEA CAMBIA: antes usabas getDb(), ahora debe conectarse de verdad
+    await connectMongo();
+
     const PORT = env.PORT;
-    const server = app.listen(PORT, () => logger.info(` Server listening on port ${PORT}`));
+    const server = app.listen(PORT, () =>
+      logger.info(`🚀 Server listening on port ${PORT}`)
+    );
 
     // Cierre ordenado
     const shutdown = async (signal: string) => {
       try {
-        logger.warn(` Received ${signal}, shutting down...`);
+        logger.warn(`🛑 Received ${signal}, shutting down...`);
         server.close(async () => {
           await disconnectMongo();
-          logger.info("MongoDB disconnected");
+          logger.info("🔌 MongoDB disconnected");
           process.exit(0);
         });
       } catch (e) {

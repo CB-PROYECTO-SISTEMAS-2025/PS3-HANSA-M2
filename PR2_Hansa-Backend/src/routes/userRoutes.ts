@@ -3,7 +3,21 @@ import User from "../models/User";
 import { verifyToken } from "../middleware/auth";
 
 const router = express.Router();
+// Listar usuarios públicos (top 20 por repoCount)
+router.get("/", async (_req, res) => {
+  try {
+    const users = await User.find({ isPublic: true })
+      .select("username bio profileImage repoCount hobbies userType") // solo campos seguros
+      .sort({ repoCount: -1 })
+      .limit(20)
+      .lean();
 
+    res.json(users);
+  } catch (err) {
+    console.error("Error al listar usuarios:", err);
+    res.status(500).json({ error: "Error al listar usuarios" });
+  }
+});
 // Actualizar perfil (solo el dueño del perfil)
 router.put("/:id", verifyToken, async (req, res) => {
   try {

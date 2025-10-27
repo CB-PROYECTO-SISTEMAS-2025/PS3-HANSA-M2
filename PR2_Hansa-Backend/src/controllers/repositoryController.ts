@@ -75,21 +75,40 @@ export const createRepository = async (req: Request, res: Response) => {
 // GET /api/repositorios/mine
 export const getMyRepositories = async (req: Request, res: Response) => {
   try {
-    const userId = new mongoose.Types.ObjectId((req as any).user.id);
+    const userId = (req as any).user.id;
 
-    const repos = await Repository.find({
-      $or: [{ owner: userId }, { "participants.user": userId }],
-    })
-      .sort({ createdAt: -1 })
+    // Repos donde el usuario es propietario
+    const ownerRepos = await Repository.find({ owner: userId })
       .populate("owner", "username email")
       .lean();
 
-    res.status(200).json(repos);
-    return;
-  } catch (error) {
-    logger.error("Error al obtener repos del usuario:", error);
-    res.status(500).json({ message: "Error interno del servidor" });
-    return;
+    // Repos donde participa pero no es dueño
+    const memberRepos = await Repository.find({
+      "participants.user": userId,
+      owner: { $ne: userId },
+    })
+      .populate("owner", "username email")
+      .lean();
+
+    const totalRepos = ownerRepos.length + memberRepos.length;
+    const totalFiles = [
+      ...ownerRepos.map((r) => r.files?.length || 0),
+      ...memberRepos.map((r) => r.files?.length || 0),
+    ].reduce((a, b) => a + b, 0);
+
+    res.json({
+      ownerRepos,
+      memberRepos,
+      totals: {
+        total: totalRepos,
+        owner: ownerRepos.length,
+        member: memberRepos.length,
+        files: totalFiles,
+      },
+    });
+  } catch (err) {
+    console.error("❌ Error obteniendo repos:", err);
+    res.status(500).json({ message: "Error al obtener repositorios" });
   }
 };
 
@@ -131,6 +150,25 @@ export const getFilesByRepository = async (req: Request, res: Response) => {
     logger.error("Error al obtener archivos por repositorio:", error);
     res.status(500).json({ message: "Error al obtener archivos" });
     return;
+  }
+};
+//Get /api/repositorios/:id
+export const getRepositoryById = async (req: Request, res: Response) => {
+  try {
+    const repoId = req.params.id;
+    const repo = await Repository.findById(repoId)
+      .populate("owner", "username email")
+      .lean();
+
+    if (!repo) {
+      res.status(404).json({ message: "Repositorio no encontrado" });
+      return;
+    }
+
+    res.status(200).json(repo);
+  } catch (error) {
+    logger.error("Error al obtener repositorio:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 

@@ -28,6 +28,7 @@ function signAppJwt(
  * POST /api/auth/register
  * Crea usuario + repo personal (typeRepo="simple", mode="personal")
  */
+// src/controllers/authController.ts (solo reemplaza la función register)
 export const register: RequestHandler = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -37,44 +38,60 @@ export const register: RequestHandler = async (req, res) => {
       return;
     }
 
+    // Verificar usuario existente
     const existing = await User.findOne({ $or: [{ username }, { email }] });
     if (existing) {
       res.status(400).json({ message: "El usuario o email ya están en uso." });
       return;
     }
 
+    // Crear usuario
     const hashed = await bcrypt.hash(password, 10);
     const newUser = new User({ username, email, password: hashed });
     await newUser.save();
 
-    // Crear repositorio personal alineado a modelos nuevos
-  // newUser._id can be unknown in some mongoose typings; cast to string|ObjectId for safety
-  const ownerId = new mongoose.Types.ObjectId(newUser._id as string);
+    // Crear repo personal (ajustado a tu modelo actual)
+  // newUser._id may already be an ObjectId; cast to the correct type instead
+  const ownerId = newUser._id as mongoose.Types.ObjectId;
     const personalRepo = await Repository.create({
       name: `Repositorio de ${username}`,
       description: "Repositorio personal del usuario",
       typeRepo: "simple",
       mode: "personal",
-      privacy: "private", // personal por defecto privado (ajústalo si quieres público)
+      privacy: "private",
       owner: ownerId,
       participants: [{ user: ownerId, role: "owner", status: "active" }],
       files: [],
       tags: [],
     });
 
-    // Vincular repo al usuario
-  // personalRepo._id may be typed as unknown; cast to Types.ObjectId before pushing
-  newUser.repositories.push(personalRepo._id as mongoose.Types.ObjectId);
+    newUser.repositories.push(personalRepo._id as mongoose.Types.ObjectId);
     await newUser.save();
 
-  res.status(201).json({ message: "Usuario registrado exitosamente." });
-  return;
-  } catch (err) {
-    logger.error(err);
-  res.status(500).json({ message: "Error en el servidor." });
-  return;
+    res.status(201).json({
+      message: "✅ Usuario registrado exitosamente.",
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+      },
+      repo: {
+        id: personalRepo._id,
+        name: personalRepo.name,
+      },
+    });
+    return;
+  } catch (err: any) {
+    logger.error("❌ Error en register:", err?.message || err);
+    console.error("Detalles del error:", err);
+    res.status(500).json({
+      message: "Error interno del servidor.",
+      error: err?.message || "Error desconocido",
+    });
+    return;
   }
 };
+
 
 /**
  * POST /api/auth/login
@@ -97,7 +114,7 @@ export const login: RequestHandler = async (req, res) => {
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) {
-      res.status(400).json({ message: "Credenciales inválidas." });
+      res.status(400).json({ message: "Credenciales inválidas." + password + " " + user.password });
       return;
     }
 
@@ -118,6 +135,7 @@ export const login: RequestHandler = async (req, res) => {
       loginId,
       twoFA: true,
       message: "Se envió el código de verificación a tu correo.",
+      user: { username: user.username, email: user.email } 
     });
     return;
   } catch (err) {
