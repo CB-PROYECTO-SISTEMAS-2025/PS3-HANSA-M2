@@ -12,10 +12,13 @@ import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
 import NotificationsPage from './pages/NotificationsPage'; 
 import UsersPage from './pages/UsersPage';
-import ResetPassword from './features/auth/resetPassword/pages/ResetPassword';
+//import ResetPassword from './features/auth/resetPassword/pages/ResetPassword';
 import RequestReset from './features/auth/resetPassword/pages/RequestReset';
 import CreateRepositoryPage from './features/repository/pages/CreateRepositoryPage';
 import RepositoryDetailPage from './features/repository/components/RepositoryDetailTabs';
+
+import ForgotPassword from './features/auth/forgotPassword/pages/ForgotPassword';
+import ResetPassword from './features/auth/forgotPassword/pages/ResetPassword';
 
 
 
@@ -26,6 +29,13 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/account/register" element={<Register />} />
         <Route path="/account/verify-code" element={<VerifyCode />} />
+
+        {/* Rutas cambio contraseña */}
+<Route path="/account/forgot-password" element={<ForgotPassword />} />
+<Route path="/account/reset-password" element={<ResetPassword />} />
+<Route path="/reset-password" element={<ResetPassword />} /> {/* opcional */}
+
+        
         <Route path="/projects" element={<Projects />} />
         <Route path="/account/reset" element={<RequestReset />} />
         <Route path="/account/reset-password" element={<ResetPassword />} />
