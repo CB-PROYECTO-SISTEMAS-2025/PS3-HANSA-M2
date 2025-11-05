@@ -16,7 +16,7 @@ import fileRoutes from "./routes/fileRoutes";
 import repositoryRoutes from "./routes/repositoryRoutes";
 import invitationRoutes from "./routes/invitationRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
-
+import applicationRoutes from "./routes/applicationRoutes";
 const app = express();
 
 // 🛡️ Seguridad y parsers
@@ -43,7 +43,7 @@ app.use("/api/files", fileRoutes);
 app.use("/api/repositorios", repositoryRoutes);
 app.use("/api/invitaciones", invitationRoutes);
 app.use("/api/notificaciones", notificationRoutes);
-
+app.use("/api/applications", applicationRoutes);
 // 🚫 404 — Ruta no encontrada
 app.use((_req: any, res: any) => {
   res.status(404).json({ error: "Not Found" });

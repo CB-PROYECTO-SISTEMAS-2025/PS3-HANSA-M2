@@ -7,7 +7,7 @@ interface Repo {
   _id: string;
   name: string;
   description?: string;
-  typeRepo: string;
+  typeRepo: string; // "creator" o "simple"
   owner?: { username: string };
   featured?: boolean;
   isRxUno?: boolean;
@@ -35,10 +35,11 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1️ Repos públicos (prioriza tipo Creador y RX.UNO)
+        // 1️⃣ Repos públicos (prioriza tipo Creador y RX.UNO)
         const repoRes = await api.get("/api/repositorios/publicos");
         let allRepos = repoRes.data as Repo[];
 
+        // orden: RX.UNO → Creador → Simple
         allRepos = allRepos.sort((a, b) => {
           if (a.isRxUno) return -1;
           if (b.isRxUno) return 1;
@@ -46,13 +47,14 @@ const Home: React.FC = () => {
           if (b.typeRepo === "creator" && a.typeRepo !== "creator") return 1;
           return 0;
         });
+
         setRepos(allRepos);
 
-        // 2️ Usuarios destacados (simulación)
+        // 2️⃣ Usuarios destacados
         const usersRes = await api.get("/api/users");
         setUsers(usersRes.data);
 
-        // 3️ Mis archivos (si está logueado)
+        // 3️⃣ Mis archivos (si está logueado)
         if (token) {
           const filesRes = await api.get("/api/files/my", {
             headers: { Authorization: `Bearer ${token}` },
@@ -69,9 +71,16 @@ const Home: React.FC = () => {
     fetchData();
   }, []);
 
+  // 🔍 Filtro de repos
   const filteredRepos = repos.filter((r) =>
     r.name.toLowerCase().includes(filter.toLowerCase())
   );
+
+  // 🚀 Navegación condicional según tipo de repo
+  const handleOpenRepo = (repo: Repo) => {
+    if (repo.typeRepo === "creator") navigate(`/repositorio/creador/${repo._id}`);
+    else navigate(`/repositorio/${repo._id}`);
+  };
 
   if (loading) return <p className="text-center mt-10">Cargando datos...</p>;
 
@@ -104,7 +113,9 @@ const Home: React.FC = () => {
                 className="w-16 h-16 rounded-full mb-3 object-cover"
               />
               <h3 className="font-semibold">{user.username}</h3>
-              <p className="text-sm text-gray-600 line-clamp-2">{user.bio || "Sin biografía"}</p>
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {user.bio || "Sin biografía"}
+              </p>
               <p className="text-xs text-gray-500 mt-1">
                 {user.repoCount || 0} repositorios
               </p>
@@ -120,10 +131,20 @@ const Home: React.FC = () => {
           {filteredRepos.map((repo) => (
             <div
               key={repo._id}
-              onClick={() => navigate(`/repositorio/${repo._id}`)}
-              className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer border-t-4 border-[var(--color-primary)]"
+              onClick={() => handleOpenRepo(repo)}
+              className={`bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer border-t-4 ${
+                repo.typeRepo === "creator"
+                  ? "border-blue-500"
+                  : "border-[var(--color-primary)]"
+              }`}
             >
-              <h3 className="font-semibold text-lg mb-2 text-[var(--color-primary)]">
+              <h3
+                className={`font-semibold text-lg mb-2 ${
+                  repo.typeRepo === "creator"
+                    ? "text-blue-600"
+                    : "text-[var(--color-primary)]"
+                }`}
+              >
                 {repo.name}
               </h3>
               <p className="text-sm text-gray-600 mb-2">
@@ -132,7 +153,12 @@ const Home: React.FC = () => {
               <p className="text-xs text-gray-500">
                 Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"}
               </p>
-              <p className="text-xs text-gray-500">Dueño: {repo.owner?.username || "N/A"}</p>
+              <p className="text-xs text-gray-500">
+                Dueño: {repo.owner?.username || "N/A"}
+              </p>
+              {repo.isRxUno && (
+                <p className="text-xs font-semibold text-blue-500 mt-1">★ Proyecto RX.UNO</p>
+              )}
             </div>
           ))}
         </div>
@@ -154,7 +180,9 @@ const Home: React.FC = () => {
                   <p className="font-medium text-gray-800">{file.filename}</p>
                   <p className="text-xs text-gray-500 mt-1">{file.metadata?.description}</p>
                   <button
-                    onClick={() => window.open(`/api/files/download/${file._id}`, "_blank")}
+                    onClick={() =>
+                      window.open(`/api/files/download/${file._id}`, "_blank")
+                    }
                     className="mt-2 text-[var(--color-primary)] hover:underline text-sm text-right"
                   >
                     Descargar

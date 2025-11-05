@@ -1,4 +1,3 @@
-// src/controllers/applicationController.ts
 import { Request, Response } from "express";
 import Application from "../models/Application";
 import Repository from "../models/Repository";
@@ -19,6 +18,18 @@ export const applyCreator = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
+    // 🚫 Evitar aplicaciones duplicadas
+    const existing = await Application.findOne({
+      repo: repoId,
+      applicant: applicantId,
+      kind: "creator",
+      status: { $in: ["pending", "accepted"] },
+    });
+    if (existing) {
+      res.status(400).json({ message: "Ya tienes una aplicación activa para este repositorio" });
+      return;
+    }
+
     const app = await Application.create({
       kind: "creator",
       repo: repo._id,
@@ -31,22 +42,22 @@ export const applyCreator = async (req: Request, res: Response): Promise<void> =
       urlPortafolio,
     });
 
-    // Notifica al owner
+    // 📩 Notifica al owner
     await Notification.create({
       user: repo.owner,
       type: "creator_new_application",
       title: "Nueva aplicación como Creador",
+      message: "Un usuario ha solicitado unirse como Creador.",
       repo: repo._id,
       application: app._id,
       actor: applicantId,
     });
 
+    logger.info(`[Application] ${applicantId} aplicó a ${repo.name} como Creador`);
     res.status(201).json({ message: "Aplicación enviada", application: app });
-    return;
   } catch (err) {
-    logger.error(err);
+    logger.error("Error al aplicar como Creador:", err);
     res.status(500).json({ message: "Error al aplicar" });
-    return;
   }
 };
 
@@ -63,6 +74,19 @@ export const applyMember = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // 🚫 Evitar aplicaciones duplicadas
+    const existing = await Application.findOne({
+      repo: repoId,
+      applicant: applicantId,
+      kind: "member",
+      status: { $in: ["pending", "accepted"] },
+    });
+    if (existing) {
+      res.status(400).json({ message: "Ya te has unido o aplicado a este repositorio" });
+      return;
+    }
+
+    // 🧾 Crear aplicación como aceptada automáticamente
     const app = await Application.create({
       kind: "member",
       repo: repo._id,
@@ -70,24 +94,33 @@ export const applyMember = async (req: Request, res: Response): Promise<void> =>
       plan,
       aportePersonal,
       amount,
+      status: "accepted",
+      decidedBy: applicantId,
+      decidedAt: new Date(),
     });
 
-    // Notifica al owner (o auto-acepta si plan = cobre y hay cupo? lo decides luego)
+    // Agregar directamente al repo
+    const exists = repo.participants.some((p: any) => (p.user as any).equals(applicantId));
+    if (!exists) {
+      repo.participants.push({ user: applicantId, role: "writer", status: "active" } as any);
+      await repo.save();
+    }
+
+    // 📩 Notificar al owner
     await Notification.create({
       user: repo.owner,
-      type: "creator_new_application",
-      title: "Nueva aplicación como Miembro",
+      type: "creator_member_joined",
+      title: "Nuevo miembro en tu Repositorio Creador",
+      message: "Un usuario se ha unido directamente como miembro.",
       repo: repo._id,
-      application: app._id,
       actor: applicantId,
     });
 
-    res.status(201).json({ message: "Aplicación enviada", application: app });
-    return;
+    logger.info(`[Application] ${applicantId} se unió directamente como Miembro a ${repo.name}`);
+    res.status(201).json({ message: "Te has unido al repositorio", application: app });
   } catch (err) {
-    logger.error(err);
+    logger.error("Error al aplicar como Miembro:", err);
     res.status(500).json({ message: "Error al aplicar" });
-    return;
   }
 };
 
@@ -99,11 +132,9 @@ export const listApplicationsByRepo = async (req: Request, res: Response): Promi
       .sort({ createdAt: -1 })
       .populate("applicant", "username email");
     res.status(200).json(apps);
-    return;
   } catch (err) {
-    logger.error(err);
+    logger.error("Error al listar aplicaciones:", err);
     res.status(500).json({ message: "Error al listar aplicaciones" });
-    return;
   }
 };
 
@@ -124,8 +155,13 @@ export const acceptApplication = async (req: Request, res: Response): Promise<vo
       res.status(404).json({ message: "Repositorio no encontrado" });
       return;
     }
-    if (!repo.owner.equals(approverId)) {
-      res.status(403).json({ message: "No autorizado" });
+
+    // 🔒 Solo owner o admin pueden aceptar
+    const isAllowed =
+      repo.owner.equals(approverId) ||
+      repo.participants.some((p: any) => p.user.equals(approverId) && p.role === "admin");
+    if (!isAllowed) {
+      res.status(403).json({ message: "No autorizado para aceptar esta solicitud" });
       return;
     }
 
@@ -134,30 +170,29 @@ export const acceptApplication = async (req: Request, res: Response): Promise<vo
     app.decidedAt = new Date();
     await app.save();
 
-    // Agrega al repo con rol según tipo
-    const role = app.kind === "creator" ? "creator" : "member";
+    // Agrega al repo con rol writer
     const exists = repo.participants.some((p: any) => (p.user as any).equals(app.applicant));
     if (!exists) {
-      repo.participants.push({ user: app.applicant, role, status: "active" } as any);
+      repo.participants.push({ user: app.applicant, role: "writer", status: "active" } as any);
       await repo.save();
     }
 
-    // Notifica al solicitante
+    // 📩 Notificar al solicitante
     await Notification.create({
       user: app.applicant,
-      type: app.kind === "creator" ? "creator_creator_accepted" : "creator_member_joined",
-      title: app.kind === "creator" ? "Fuiste aceptado como Creador" : "Unido como Miembro",
+      type: "creator_creator_accepted",
+      title: "Tu aplicación fue aceptada",
+      message: "Ahora formas parte del repositorio como colaborador.",
       repo: repo._id,
       application: app._id,
       actor: approverId,
     });
 
+    logger.info(`[Application] ${app._id} aceptada por ${approverId}`);
     res.status(200).json({ message: "Aplicación aceptada" });
-    return;
   } catch (err) {
-    logger.error(err);
+    logger.error("Error al aceptar aplicación:", err);
     res.status(500).json({ message: "Error al aceptar" });
-    return;
   }
 };
 
@@ -178,8 +213,13 @@ export const rejectApplication = async (req: Request, res: Response): Promise<vo
       res.status(404).json({ message: "Repositorio no encontrado" });
       return;
     }
-    if (!repo.owner.equals(approverId)) {
-      res.status(403).json({ message: "No autorizado" });
+
+    // 🔒 Validar permisos
+    const isAllowed =
+      repo.owner.equals(approverId) ||
+      repo.participants.some((p: any) => p.user.equals(approverId) && p.role === "admin");
+    if (!isAllowed) {
+      res.status(403).json({ message: "No autorizado para rechazar" });
       return;
     }
 
@@ -188,11 +228,21 @@ export const rejectApplication = async (req: Request, res: Response): Promise<vo
     app.decidedAt = new Date();
     await app.save();
 
+    // 📩 Notificar al solicitante
+    await Notification.create({
+      user: app.applicant,
+      type: "creator_application_rejected",
+      title: "Tu aplicación fue rechazada",
+      message: "El owner ha rechazado tu solicitud.",
+      repo: repo._id,
+      application: app._id,
+      actor: approverId,
+    });
+
+    logger.info(`[Application] ${app._id} rechazada por ${approverId}`);
     res.status(200).json({ message: "Aplicación rechazada" });
-    return;
   } catch (err) {
-    logger.error(err);
+    logger.error("Error al rechazar aplicación:", err);
     res.status(500).json({ message: "Error al rechazar" });
-    return;
   }
 };

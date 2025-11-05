@@ -1,11 +1,12 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type NotificationType =
-  | "simple_invite"              // te invitaron a un repo simple
-  | "simple_join_accepted"       // aceptaron unirte a un repo simple
-  | "creator_new_application"    // alguien aplicó a tu repo de creador
-  | "creator_creator_accepted"   // te aceptaron como Creador
-  | "creator_member_joined";     // alguien se unió (pagó) como Miembro
+  | "simple_invite"
+  | "simple_join_accepted"
+  | "creator_new_application"
+  | "creator_creator_accepted"
+  | "creator_member_joined"
+  | "creator_application_rejected"; 
 
 export interface INotification extends Document {
   user: Types.ObjectId;          // receptor
