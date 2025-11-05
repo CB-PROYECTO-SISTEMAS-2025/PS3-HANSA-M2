@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
+import img from "../assets/user.png";
 
 interface Repo {
   _id: string;
@@ -34,7 +35,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        /*// 1️⃣ Repos públicos (prioriza tipo Creador y RX.UNO)
+        // 1️ Repos públicos (prioriza tipo Creador y RX.UNO)
         const repoRes = await api.get("/api/repositorios/publicos");
         let allRepos = repoRes.data as Repo[];
 
@@ -45,15 +46,15 @@ const Home: React.FC = () => {
           if (b.typeRepo === "creator" && a.typeRepo !== "creator") return 1;
           return 0;
         });
-        setRepos(allRepos);*/
+        setRepos(allRepos);
 
-        // 2️⃣ Usuarios destacados (simulación)
+        // 2️ Usuarios destacados (simulación)
         const usersRes = await api.get("/api/users");
         setUsers(usersRes.data);
 
-        // 3️⃣ Mis archivos (si está logueado)
+        // 3️ Mis archivos (si está logueado)
         if (token) {
-          const filesRes = await api.get("/api/files/myfiles/mis-repos", {
+          const filesRes = await api.get("/api/files/my", {
             headers: { Authorization: `Bearer ${token}` },
           });
           setMyFiles(filesRes.data);
@@ -98,7 +99,7 @@ const Home: React.FC = () => {
               className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center text-center hover:shadow-lg transition"
             >
               <img
-                src={user.profileImage || "/default-avatar.png"}
+                src={user.profileImage || img}
                 alt={user.username}
                 className="w-16 h-16 rounded-full mb-3 object-cover"
               />

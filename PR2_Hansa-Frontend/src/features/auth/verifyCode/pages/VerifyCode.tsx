@@ -54,7 +54,7 @@ const VerifyCode: React.FC = () => {
       const { token, user } = await verifyCode(username, fullCode);
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      navigate("/file-repository");
+      navigate("/home");
     } catch (err: any) {
       setError(err?.response?.data?.message || "Código incorrecto o expirado.");
     } finally {

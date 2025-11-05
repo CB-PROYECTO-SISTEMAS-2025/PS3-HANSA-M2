@@ -6,15 +6,17 @@ import { logger } from "../utils/logger";
 export const listNotifications = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user.id;
-    const items = await Notification.find({ user: userId }).sort({ createdAt: -1 });
+    const items = await Notification.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate("actor", "username email")
+      .populate("repo", "name typeRepo");
     res.status(200).json(items);
-    return;
   } catch (err) {
     logger.error(err);
     res.status(500).json({ message: "Error al listar notificaciones" });
-    return;
   }
 };
+
 
 export const getNotification = async (req: Request, res: Response): Promise<void> => {
   try {

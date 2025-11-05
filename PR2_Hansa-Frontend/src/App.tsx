@@ -7,11 +7,12 @@ import Layout from './shared/components/Layout';
 //import FileVisualization from './features/repository/pages/FileVisualization';
 import Home from './pages/Home';
 import VistaPerfil from './pages/Profile';
-import EditarPerfilPage from './pages/EditProfile';
+import EditarPerfilPage from './pages/EditarPerfilPage';
 import MyRepositoriesPage from './features/repository/pages/MyRepositoriesPage';
 import FileUserRepos from './features/repository/pages/FileUserRepos';
 import NotificationsPage from './pages/NotificationsPage'; 
 import UsersPage from './pages/UsersPage';
+import UserDetailPage from "./pages/UserDetailPage";
 //import ResetPassword from './features/auth/resetPassword/pages/ResetPassword';
 import RequestReset from './features/auth/resetPassword/pages/RequestReset';
 import CreateRepositoryPage from './features/repository/pages/CreateRepositoryPage';
@@ -46,11 +47,12 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/mis-repositorios" element={<MyRepositoriesPage />} />
           <Route path="/profile" element={<VistaPerfil />} />
-          <Route path="/editar-perfil" element={<EditarPerfilPage />} />
+          <Route path="/editProfile" element={<EditarPerfilPage />} />
           <Route path="/notificaciones" element={<NotificationsPage />} /> 
           <Route path="/usuarios" element={<UsersPage />} />
           <Route path="/repositorio/nuevo" element={<CreateRepositoryPage />} />
           <Route path="/repositorio/:id" element={<RepositoryDetailPage />} />
+          <Route path="/usuarios/:id" element={<UserDetailPage />} />
 
         </Route>
       </Routes>

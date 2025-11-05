@@ -16,7 +16,8 @@ router.post("/", verifyToken, createRepository);
 
 // Mis repos (owner o miembro)
 router.get("/mis-repositorios", verifyToken, getMyRepositories);
-
+// Públicos (simple público + creator vitrina)
+router.get("/publicos", getPublicRepositories);
 // Archivos (vista rápida por GridFS; opcional)
 router.get("/repositorio/:id", verifyToken, getFilesByRepository);
 // Repositorio por ID
@@ -25,8 +26,7 @@ router.get("/:id", verifyToken, getRepositoryById);
 // Eliminar (solo owner)
 router.delete("/:id", verifyToken, deleteRepository);
 
-// Públicos (simple público + creator vitrina)
-router.get("/publicos", getPublicRepositories);
+
 
 /* Si prefieres inglés:
 router.post("/", verifyToken, createRepository);

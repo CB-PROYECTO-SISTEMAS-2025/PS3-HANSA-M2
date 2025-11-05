@@ -14,6 +14,8 @@ import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import fileRoutes from "./routes/fileRoutes";
 import repositoryRoutes from "./routes/repositoryRoutes";
+import invitationRoutes from "./routes/invitationRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 
 const app = express();
 
@@ -39,6 +41,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/repositorios", repositoryRoutes);
+app.use("/api/invitaciones", invitationRoutes);
+app.use("/api/notificaciones", notificationRoutes);
 
 // 🚫 404 — Ruta no encontrada
 app.use((_req: any, res: any) => {
