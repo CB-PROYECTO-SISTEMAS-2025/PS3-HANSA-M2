@@ -1,45 +1,165 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getRepositoryById } from "../services/repositoryService";
+import { fetchFilesByRepositoryId, downloadFileById  } from "../services/filesService";
+interface Props {
+  repo: any;
+  currentUserId: string;
+  onAddFile: () => void;
+  onAddUser: () => void;
+  refresh: () => void;
+}
 
-// Simple local tabs component so the page can pass the loaded `repo` safely.
-const RepositoryDetailTabs: React.FC<{ repo: any }> = ({ repo }) => {
-  const [active, setActive] = React.useState<string>("files");
+const RepositoryDetailTabs: React.FC<Props> = ({
+  repo,
+  currentUserId,
+  onAddFile,
+  onAddUser,
+}) => {
+
+  const [active, setActive] = React.useState("files");
+  const [files, setFiles] = useState<any[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const isOwner = repo.owner?._id === currentUserId;
+
+  useEffect(() => {
+    const loadFiles = async () => {
+      if (active === "files" && repo?._id) {
+        try {
+          setLoadingFiles(true);
+          const data = await fetchFilesByRepositoryId(repo._id);
+          setFiles(data);
+        } catch (err) {
+          console.error("Error cargando archivos del repositorio:", err);
+        } finally {
+          setLoadingFiles(false);
+        }
+      }
+    };
+    loadFiles();
+  }, [active, repo?._id]);
 
   return (
     <div>
-      <div className="flex gap-2 mb-4">
-        <button onClick={() => setActive("files")} className={`px-3 py-1 rounded ${active === "files" ? "bg-[var(--color-primary)] text-white" : "bg-gray-100"}`}>
-          Archivos
-        </button>
-        <button onClick={() => setActive("participants")} className={`px-3 py-1 rounded ${active === "participants" ? "bg-[var(--color-primary)] text-white" : "bg-gray-100"}`}>
-          Participantes
-        </button>
-        <button onClick={() => setActive("info")} className={`px-3 py-1 rounded ${active === "info" ? "bg-[var(--color-primary)] text-white" : "bg-gray-100"}`}>
-          Información
-        </button>
+      {/* Tabs Header */}
+      <div className="flex gap-2 mb-4 border-b pb-2">
+        {["files", "participants", "info"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActive(tab)}
+            className={`px-3 py-1 rounded-t font-medium ${active === tab
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-gray-100 text-gray-600"
+              }`}
+          >
+            {tab === "files" && "Archivos"}
+            {tab === "participants" && "Participantes"}
+            {tab === "info" && "Información"}
+          </button>
+        ))}
       </div>
 
-      <div className="bg-white p-4 rounded shadow">
+      {/* Tabs Content */}
+      <div className="bg-white p-4 rounded-lg shadow">
         {active === "files" && (
           <div>
-            <h3 className="font-semibold mb-2">Archivos ({(repo.files || []).length})</h3>
-            <ul className="list-disc pl-5 text-gray-700">
-              {(repo.files || []).map((f: any) => (
-                <li key={f.id || f.name}>{f.name}</li>
-              ))}
-            </ul>
+            <div className="flex justify-between mb-3">
+              <h3 className="font-semibold">Archivos ({files.length})</h3>
+              {isOwner && (
+                <button
+                  onClick={onAddFile}
+                  className="bg-[var(--color-primary)] text-white px-4 py-2 rounded hover:opacity-90"
+                >
+                  + Agregar Archivo
+                </button>
+              )}
+            </div>
+
+            {loadingFiles ? (
+              <p className="text-gray-500">Cargando archivos...</p>
+            ) : files.length ? (
+              <ul className="divide-y">
+                {files.map((f: any) => (
+                  <li
+                    key={f._id}
+                    className="flex justify-between items-center py-2"
+                  >
+                    <div>
+                      <p className="font-medium">{f.title}</p>
+                      <p className="text-sm text-gray-500">
+                        {f.description}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => downloadFileById(f._id, f.title)}
+                        className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+                      >
+                        Descargar
+                      </button>
+
+                      {isOwner && (
+                        <button className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded">
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">No hay archivos.</p>
+            )}
           </div>
         )}
 
         {active === "participants" && (
           <div>
-            <h3 className="font-semibold mb-2">Participantes</h3>
-            <ul className="list-disc pl-5 text-gray-700">
-              {(repo.participants || []).map((p: any) => (
-                <li key={p.id || p.email}>{p.name || p.email}</li>
-              ))}
-            </ul>
+            <div className="flex justify-between mb-3">
+              <h3 className="font-semibold">
+                Participantes ({repo.participants?.length || 0})
+              </h3>
+              {isOwner && (
+                <button
+                  onClick={onAddUser}
+                  className="bg-[var(--color-primary)] text-white px-4 py-2 rounded hover:opacity-90"
+                >
+                  + Agregar Usuario
+                </button>
+              )}
+            </div>
+            {repo.participants?.length ? (
+              <ul className="divide-y">
+                {repo.participants.map((p: any) => (
+                  <li
+                    key={p.user?._id || p._id}
+                    className="flex justify-between items-center py-2"
+                  >
+                    <div>
+                      <p className="font-medium">{p.user?.username}</p>
+                      <p className="text-sm text-gray-500">
+                        {p.user?.email}
+                      </p>
+                    </div>
+                    {isOwner && (
+                      <div className="flex gap-2 items-center">
+                        <select
+                          defaultValue={p.role}
+                          className="border rounded px-2 py-1 text-sm"
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="writer">Writer</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                        <button className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded">
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">No hay participantes aún.</p>
+            )}
           </div>
         )}
 
@@ -48,6 +168,8 @@ const RepositoryDetailTabs: React.FC<{ repo: any }> = ({ repo }) => {
             <h3 className="font-semibold mb-2">Detalles</h3>
             <p className="text-gray-700">Tipo: {repo.typeRepo}</p>
             <p className="text-gray-700">Privacidad: {repo.privacy}</p>
+            <p className="text-gray-700">Modo: {repo.mode}</p>
+            <p className="text-gray-700">Creador: {repo.owner?.username}</p>
           </div>
         )}
       </div>
@@ -55,24 +177,4 @@ const RepositoryDetailTabs: React.FC<{ repo: any }> = ({ repo }) => {
   );
 };
 
-const RepositoryDetailPage: React.FC = () => {
-  const { id } = useParams();
-  const [repo, setRepo] = useState<any>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    getRepositoryById(id!, token!).then(setRepo).catch(console.error);
-  }, [id]);
-
-  if (!repo) return <p className="text-center mt-10">Cargando...</p>;
-
-  return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-4">{repo.name}</h1>
-      <p className="text-gray-600 mb-6">{repo.description}</p>
-      <RepositoryDetailTabs repo={repo} />
-    </div>
-  );
-};
-
-export default RepositoryDetailPage;
+export default RepositoryDetailTabs;
