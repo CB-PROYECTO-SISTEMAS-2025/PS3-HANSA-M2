@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import api from "../../../utils/api";
+import { FiSearch } from "react-icons/fi";
 
 interface Repository {
   _id: string;
@@ -21,6 +22,12 @@ const MyRepositoriesPage: React.FC = () => {
   const [summary, setSummary] = useState({ total: 0, owner: 0, member: 0, files: 0 });
   const [loading, setLoading] = useState(true);
 
+  // Filtros
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "simple" | "creator">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "member">("all");
+  const [orderFilter, setOrderFilter] = useState<"recent" | "oldest">("recent");
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -38,7 +45,6 @@ const MyRepositoriesPage: React.FC = () => {
         setReposOwner(ownerRepos);
         setReposMember(memberRepos);
         setSummary(totals);
-
       } catch (err) {
         console.error("Error cargando repositorios:", err);
       } finally {
@@ -49,9 +55,35 @@ const MyRepositoriesPage: React.FC = () => {
     fetchData();
   }, []);
 
+  // 🔍 Aplicar filtros en memoria
+  const filteredRepos = useMemo(() => {
+    let combined: Repository[] = [];
 
+    // Determinar conjuntos según filtro de rol
+    if (roleFilter === "all" || roleFilter === "owner") combined = combined.concat(reposOwner);
+    if (roleFilter === "all" || roleFilter === "member") combined = combined.concat(reposMember);
 
+    // Filtro de búsqueda
+    if (search.trim()) {
+      combined = combined.filter((r) =>
+        r.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
+    // Filtro de tipo
+    if (typeFilter !== "all") {
+      combined = combined.filter((r) => r.typeRepo === typeFilter);
+    }
+
+    // Orden
+    combined = combined.sort((a, b) => {
+      const da = new Date(a.createdAt).getTime();
+      const db = new Date(b.createdAt).getTime();
+      return orderFilter === "recent" ? db - da : da - db;
+    });
+
+    return combined;
+  }, [reposOwner, reposMember, search, typeFilter, roleFilter, orderFilter]);
 
   if (loading) return <p className="text-center mt-10">Cargando repositorios...</p>;
 
@@ -61,105 +93,116 @@ const MyRepositoriesPage: React.FC = () => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-[var(--color-primary)]">Mis Repositorios</h1>
         <Link
-  to="/repositorio/nuevo"
-  className="bg-[var(--color-primary)] text-white px-6 py-2 rounded hover:bg-opacity-30 transition"
->
-  Crear Repositorio
-</Link>
-
+          to="/repositorio/nuevo"
+          className="bg-[var(--color-primary)] text-white px-6 py-2 rounded hover:bg-opacity-30 transition"
+        >
+          Crear Repositorio
+        </Link>
       </div>
 
       {/* DASHBOARD RESUMEN */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <div className="bg-white p-4 rounded-xl shadow text-center">
-          <h3 className="text-sm text-gray-500">Total</h3>
+          <h3 className="text-sm text-gray-500">Total Repositorios</h3>
           <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.total}</p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow text-center">
-          <h3 className="text-sm text-gray-500">Propietario</h3>
+          <h3 className="text-sm text-gray-500">Como Propietario</h3>
           <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.owner}</p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow text-center">
-          <h3 className="text-sm text-gray-500">Miembro</h3>
+          <h3 className="text-sm text-gray-500">Como Colaborador</h3>
           <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.member}</p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow text-center">
-          <h3 className="text-sm text-gray-500">Archivos</h3>
+          <h3 className="text-sm text-gray-500">Archivos Totales</h3>
           <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.files}</p>
         </div>
       </div>
 
-      {/* SECCIÓN: MIS REPOS PROPIOS */}
-      <section className="mb-10">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Repositorios Propios</h2>
-        {reposOwner.length === 0 ? (
-          <p className="text-gray-600">Aún no tienes repositorios propios.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {reposOwner
-              .sort((a, b) =>
-                a.mode === "personal" && b.mode !== "personal"
-                  ? -1
-                  : a.mode !== "personal" && b.mode === "personal"
-                  ? 1
-                  : 0
-              )
-              .map((repo) => (
-                <Link to={`/repositorio/${repo._id}`} key={repo._id}>
-                  <div className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 border-[var(--color-primary)]">
-                    <h3 className="font-semibold text-[var(--color-primary)] text-lg mb-1">
-                      {repo.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {repo.description || "Sin descripción"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"} •{" "}
-                      {repo.mode || "—"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Archivos: {repo.fileCount || 0} • Creado:{" "}
-                      {new Date(repo.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-          </div>
-        )}
-      </section>
+      {/* FILTROS */}
+      <div className="flex flex-wrap items-center gap-4 mb-8">
+        {/* Buscar */}
+        <div className="flex items-center border rounded-md bg-white px-3 py-1.5 shadow-sm">
+          <FiSearch className="text-gray-500 mr-2" />
+          <input
+            type="text"
+            placeholder="Nombre del repositorio..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="outline-none text-sm w-48"
+          />
+        </div>
 
-      {/* SECCIÓN: DONDE SOY MIEMBRO */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Repositorios donde soy miembro</h2>
-        {reposMember.length === 0 ? (
-          <p className="text-gray-600">No participas en otros repositorios todavía.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {reposMember
-              .sort((a, b) => (a.typeRepo === "creator" ? -1 : b.typeRepo === "creator" ? 1 : 0))
-              .map((repo) => (
-                <Link to={`/repositorio/${repo._id}`} key={repo._id}>
-                  <div className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 border-[var(--color-primarytwo)]">
-                    <h3 className="font-semibold text-[var(--color-primary)] text-lg mb-1">
-                      {repo.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {repo.description || "Sin descripción"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Dueño: {repo.owner?.username || "Desconocido"}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-          </div>
-        )}
-      </section>
+        {/* Tipo */}
+        <div className="flex items-center text-sm">
+          <span className="text-gray-600 mr-2">Tipo:</span>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as any)}
+            className="border rounded-md px-2 py-1 bg-white shadow-sm"
+          >
+            <option value="all">Todos los tipos</option>
+            <option value="simple">Simple</option>
+            <option value="creator">Creador</option>
+          </select>
+        </div>
 
-      
+        {/* Rol */}
+        <div className="flex items-center text-sm">
+          <span className="text-gray-600 mr-2">Rol:</span>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value as any)}
+            className="border rounded-md px-2 py-1 bg-white shadow-sm"
+          >
+            <option value="all">Todos los roles</option>
+            <option value="owner">Propietario</option>
+            <option value="member">Colaborador</option>
+          </select>
+        </div>
+
+        {/* Ordenar */}
+        <div className="flex items-center text-sm">
+          <span className="text-gray-600 mr-2">Ordenar:</span>
+          <select
+            value={orderFilter}
+            onChange={(e) => setOrderFilter(e.target.value as any)}
+            className="border rounded-md px-2 py-1 bg-white shadow-sm"
+          >
+            <option value="recent">Más recientes</option>
+            <option value="oldest">Más antiguos</option>
+          </select>
+        </div>
+      </div>
+
+      {/* LISTA FILTRADA */}
+      {filteredRepos.length === 0 ? (
+        <p className="text-gray-600">No se encontraron repositorios con los filtros seleccionados.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredRepos.map((repo) => (
+            <Link to={`/repositorio/${repo._id}`} key={repo._id}>
+              <div className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 border-[var(--color-primary)]">
+                <h3 className="font-semibold text-[var(--color-primary)] text-lg mb-1">
+                  {repo.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                  {repo.description || "Sin descripción"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"} •{" "}
+                  {repo.mode || "—"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Archivos: {repo.fileCount || 0} • Creado:{" "}
+                  {new Date(repo.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
