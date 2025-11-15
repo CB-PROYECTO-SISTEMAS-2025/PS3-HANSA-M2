@@ -105,45 +105,70 @@ const RepositoryForm: React.FC<Props> = ({ mode, repoData }) => {
       </div>
 
       {/* === Tipo y configuración === */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block font-semibold">Tipo de Repositorio</label>
-          <select
-            name="typeRepo"
-            value={repo.typeRepo}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          >
-            <option value="simple">Simple</option>
-            <option value="creator">Creador</option>
-          </select>
-        </div>
+<div className="grid grid-cols-2 gap-4">
+  <div>
+    <label className="block font-semibold">Tipo de Repositorio</label>
+    <select
+      name="typeRepo"
+      value={repo.typeRepo}
+      onChange={handleChange}
+      className="w-full border p-2 rounded"
+    >
+      <option value="simple">Simple</option>
+      <option value="creator">Cocreador</option>
+    </select>
 
-        {repo.typeRepo === "simple" ? (
-          <div>
-            <label className="block font-semibold">Privacidad</label>
-            <select
-              name="privacy"
-              value={repo.privacy}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            >
-              <option value="public">Público</option>
-              <option value="private">Privado</option>
-            </select>
-          </div>
-        ) : (
-          <div>
-            <label className="block font-semibold">Privacidad</label>
-            <input
-              type="text"
-              value="Público (fijo)"
-              disabled
-              className="w-full border p-2 rounded bg-gray-100 text-gray-500"
-            />
-          </div>
-        )}
-      </div>
+    {/* ░░░ EXPLICACIÓN DE CADA TIPO (VISUAL – NO CAMBIA EL BACKEND) ░░░ */}
+    <div className="mt-3 text-xs bg-gray-100 p-3 rounded border">
+      {repo.typeRepo === "simple" ? (
+        <>
+          <p className="font-semibold text-pink-600">Repositorio Simple</p>
+          <p className="text-gray-600 mt-1">
+            Ideal para proyectos personales, compartir ideas,
+            colaborar con amigos o trabajar en pequeños proyectos.
+            Puede ser público o privado, y puede ser personal o grupal.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="font-semibold text-blue-600">Repositorio de Cocreadores</p>
+          <p className="text-gray-600 mt-1">
+            Diseñado para proyectos serios como investigaciones, 
+            desarrollo de software o iniciativas colaborativas formales. 
+            Los usuarios deben enviar una solicitud para unirse como cocreadores.
+          </p>
+        </>
+      )}
+    </div>
+  </div>
+
+  {/* PRIVACIDAD */}
+  {repo.typeRepo === "simple" ? (
+    <div>
+      <label className="block font-semibold">Privacidad</label>
+      <select
+        name="privacy"
+        value={repo.privacy}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
+      >
+        <option value="public">Público</option>
+        <option value="private">Privado</option>
+      </select>
+    </div>
+  ) : (
+    <div>
+      <label className="block font-semibold">Privacidad</label>
+      <input
+        type="text"
+        value="Público (fijo)"
+        disabled
+        className="w-full border p-2 rounded bg-gray-100 text-gray-500"
+      />
+    </div>
+  )}
+</div>
+
 
       {/* === Configuración específica === */}
       {repo.typeRepo === "simple" && (

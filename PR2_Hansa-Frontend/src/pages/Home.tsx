@@ -223,46 +223,96 @@ const Home: React.FC = () => {
       )}
 
       {/* Repositorios */}
-      {filteredData.repos.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Repositorios públicos</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {filteredData.repos.map((repo) => (
-              <div
-                key={repo._id}
-                onClick={() => handleOpenRepo(repo)}
-                className={`bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer border-t-4 ${
-                  repo.typeRepo === "creator"
-                    ? "border-blue-500"
-                    : "border-[var(--color-primary)]"
-                }`}
-              >
-                <h3
-                  className={`font-semibold text-lg mb-2 ${
-                    repo.typeRepo === "creator"
-                      ? "text-blue-600"
-                      : "text-[var(--color-primary)]"
-                  }`}
-                >
-                  {repo.name}
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  {repo.description || "Sin descripción"}
+{filteredData.repos.length > 0 && (
+  <section className="mb-10">
+    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Repositorios públicos</h2>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {filteredData.repos.map((repo) => (
+        <div
+          key={repo._id}
+          onClick={() => handleOpenRepo(repo)}
+          className={`group relative bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer border-t-4
+            ${
+              repo.typeRepo === "creator"
+                ? "border-blue-500" // azul para cocreador
+                : "border-pink-500" // rosa para simple
+            }
+          `}
+        >
+          {/* TÍTULO */}
+          <h3
+            className={`font-semibold text-lg mb-2
+              ${
+                repo.typeRepo === "creator"
+                  ? "text-blue-600" // texto azul
+                  : "text-pink-600" // texto rosado
+              }
+            `}
+          >
+            {repo.name}
+          </h3>
+
+          {/* DESCRIPCION */}
+          <p className="text-sm text-gray-600 mb-2">
+            {repo.description || "Sin descripción"}
+          </p>
+
+          {/* TIPO REPO */}
+          <p className="text-xs text-gray-700 font-medium">
+            Tipo:{" "}
+            {repo.typeRepo === "creator" ? "Cocreador" : "Simple"}
+          </p>
+
+          {/* DUEÑO */}
+          <p className="text-xs text-gray-500">
+            Dueño: {repo.owner?.username || "N/A"}
+          </p>
+
+          {/* RX.UNO */}
+          {repo.isRxUno && (
+            <p className="text-xs font-semibold text-blue-600 mt-1">
+              ★ Proyecto RX.UNO
+            </p>
+          )}
+
+          {/* ==============================
+                      TOOLTIP
+             ============================== */}
+          <div
+            className="absolute left-0 right-0 top-full mt-2 opacity-0 invisible 
+                       group-hover:opacity-100 group-hover:visible
+                       transition-all duration-200 bg-white border border-gray-300
+                       shadow-xl rounded-lg p-3 text-xs text-gray-700 z-50"
+          >
+            {repo.typeRepo === "creator" ? (
+              <>
+                <p className="font-semibold text-blue-600 mb-1">
+                  Repositorio de Cocreadores
                 </p>
-                <p className="text-xs text-gray-500">
-                  Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"}
+                <p>
+                  Espacio para investigación avanzada, creación de software y desarrollo serio.
+                  Para unirte debes aplicar y ser aceptado.
                 </p>
-                <p className="text-xs text-gray-500">
-                  Dueño: {repo.owner?.username || "N/A"}
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-pink-600 mb-1">
+                  Repositorio Simple
                 </p>
-                {repo.isRxUno && (
-                  <p className="text-xs font-semibold text-blue-500 mt-1">★ Proyecto RX.UNO</p>
-                )}
-              </div>
-            ))}
+                <p>
+                  Ideal para proyectos personales, compartir ideas, colaborar con amigos y
+                  experimentar libremente.
+                </p>
+              </>
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+
 
       {/* Archivos */}
       {token && filteredData.files.length > 0 && (
