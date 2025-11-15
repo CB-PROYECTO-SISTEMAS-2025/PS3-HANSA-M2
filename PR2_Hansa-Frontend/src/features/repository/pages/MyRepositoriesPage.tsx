@@ -91,7 +91,9 @@ const MyRepositoriesPage: React.FC = () => {
     <div className="min-h-screen p-6 bg-gray-50 max-w-6xl mx-auto">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-[var(--color-primary)]">Mis Repositorios</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-primary)]">
+          Mis Repositorios
+        </h1>
         <Link
           to="/repositorio/nuevo"
           className="bg-[var(--color-primary)] text-white px-6 py-2 rounded hover:bg-opacity-30 transition"
@@ -104,19 +106,27 @@ const MyRepositoriesPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <div className="bg-white p-4 rounded-xl shadow text-center">
           <h3 className="text-sm text-gray-500">Total Repositorios</h3>
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.total}</p>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">
+            {summary.total}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow text-center">
           <h3 className="text-sm text-gray-500">Como Propietario</h3>
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.owner}</p>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">
+            {summary.owner}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow text-center">
           <h3 className="text-sm text-gray-500">Como Colaborador</h3>
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.member}</p>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">
+            {summary.member}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow text-center">
           <h3 className="text-sm text-gray-500">Archivos Totales</h3>
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{summary.files}</p>
+          <p className="text-2xl font-bold text-[var(--color-primary)]">
+            {summary.files}
+          </p>
         </div>
       </div>
 
@@ -178,22 +188,41 @@ const MyRepositoriesPage: React.FC = () => {
 
       {/* LISTA FILTRADA */}
       {filteredRepos.length === 0 ? (
-        <p className="text-gray-600">No se encontraron repositorios con los filtros seleccionados.</p>
+        <p className="text-gray-600">
+          No se encontraron repositorios con los filtros seleccionados.
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredRepos.map((repo) => (
             <Link to={`/repositorio/${repo._id}`} key={repo._id}>
-              <div className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 border-[var(--color-primary)]">
-                <h3 className="font-semibold text-[var(--color-primary)] text-lg mb-1">
+              <div
+                className={`bg-white rounded-xl p-5 shadow hover:shadow-lg transition border-t-4 
+                  ${
+                    repo.mode === "personal"
+                      ? "border-blue-500"
+                      : "border-[var(--color-primary)]"
+                  }`}
+              >
+                <h3
+                  className={`font-semibold text-lg mb-1 
+                    ${
+                      repo.mode === "personal"
+                        ? "text-blue-600"
+                        : "text-[var(--color-primary)]"
+                    }`}
+                >
                   {repo.name}
                 </h3>
+
                 <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                   {repo.description || "Sin descripción"}
                 </p>
+
                 <p className="text-xs text-gray-500">
                   Tipo: {repo.typeRepo === "creator" ? "Creador" : "Simple"} •{" "}
                   {repo.mode || "—"}
                 </p>
+
                 <p className="text-xs text-gray-500">
                   Archivos: {repo.fileCount || 0} • Creado:{" "}
                   {new Date(repo.createdAt).toLocaleDateString()}

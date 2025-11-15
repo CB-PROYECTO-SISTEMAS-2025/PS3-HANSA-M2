@@ -134,3 +134,4 @@ export const acceptInvitation = async (req: Request, res: Response) => {
     return;
   }
 };
+

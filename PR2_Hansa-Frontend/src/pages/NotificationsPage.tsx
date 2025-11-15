@@ -5,6 +5,11 @@ import {
   decideApplication,
 } from "../services/notificationService";
 
+import {
+  acceptInvitation,
+  rejectInvitation,
+} from "../services/invitationService";
+
 interface Notification {
   _id: string;
   type:
@@ -20,6 +25,7 @@ interface Notification {
   repo?: { name: string };
   application?: string;
   actor?: { username: string };
+  payload?: { invitationToken?: string };
 }
 
 const NotificationsPage: React.FC = () => {
@@ -29,6 +35,7 @@ const NotificationsPage: React.FC = () => {
 
   const fetchNotifications = async () => {
     if (!token) return;
+
     try {
       const data = await getNotifications(token);
       setNotifications(data);
@@ -45,27 +52,63 @@ const NotificationsPage: React.FC = () => {
 
   const handleDecision = async (appId: string, action: "accept" | "reject") => {
     if (!token) return;
+
     try {
       await decideApplication(appId, action, token);
-      alert(`Aplicación ${action === "accept" ? "aceptada" : "rechazada"} con éxito.`);
+      alert(
+        `Aplicación ${
+          action === "accept" ? "aceptada" : "rechazada"
+        } con éxito.`
+      );
       fetchNotifications();
     } catch (err: any) {
-      console.error(err);
       alert(err?.response?.data?.message || "Error al procesar la solicitud");
     }
   };
 
   const handleMarkAsRead = async (id: string) => {
     if (!token) return;
-    await markAsSeen(id, token);
-    fetchNotifications();
+
+    try {
+      await markAsSeen(id, token);
+      fetchNotifications();
+    } catch {
+      alert("Error al marcar como leída");
+    }
   };
 
-  if (loading) return <p className="text-center mt-10">Cargando notificaciones...</p>;
+  const handleAcceptInvite = async (invToken?: string) => {
+    if (!token) return;
+    if (!invToken) return alert("No se encontró el token de invitación");
+
+    try {
+      await acceptInvitation(invToken, token);
+      alert("Invitación aceptada correctamente");
+      fetchNotifications();
+    } catch {
+      alert("Error al aceptar invitación");
+    }
+  };
+
+  const handleRejectInvite = async (invToken?: string) => {
+    if (!token) return;
+    if (!invToken) return alert("No se encontró el token de invitación");
+
+    try {
+      await rejectInvitation(invToken, token);
+      alert("Invitación rechazada correctamente");
+      fetchNotifications();
+    } catch {
+      alert("Error al rechazar invitación");
+    }
+  };
+
+  if (loading)
+    return <p className="text-center mt-10">Cargando notificaciones...</p>;
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">🔔 Notificaciones</h1>
+      <h1 className="text-2xl font-bold mb-4">Notificaciones</h1>
 
       {notifications.length === 0 ? (
         <p className="text-gray-500">No tienes notificaciones aún.</p>
@@ -81,16 +124,23 @@ const NotificationsPage: React.FC = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold">{n.title}</h3>
-                  <p className="text-sm text-gray-600">{n.message || "Sin mensaje adicional"}</p>
+                  <p className="text-sm text-gray-600">
+                    {n.message || "Sin mensaje adicional"}
+                  </p>
+
                   {n.repo && (
-                    <p className="text-xs text-gray-500 mt-1">Repo: {n.repo.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Repo: {n.repo.name}
+                    </p>
                   )}
+
                   {n.actor && (
                     <p className="text-xs text-gray-500">
                       De: {n.actor.username}
                     </p>
                   )}
                 </div>
+
                 {!n.seen && (
                   <button
                     onClick={() => handleMarkAsRead(n._id)}
@@ -101,7 +151,7 @@ const NotificationsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Botones dinámicos según tipo */}
+              {/* CREATOR applications */}
               {n.type === "creator_new_application" && n.application && (
                 <div className="mt-3 flex gap-2">
                   <button
@@ -110,6 +160,7 @@ const NotificationsPage: React.FC = () => {
                   >
                     Aceptar
                   </button>
+
                   <button
                     onClick={() => handleDecision(n.application!, "reject")}
                     className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
@@ -119,16 +170,22 @@ const NotificationsPage: React.FC = () => {
                 </div>
               )}
 
+              {/* SIMPLE REPO INVITES */}
               {n.type === "simple_invite" && (
                 <div className="mt-3 flex gap-2">
                   <button
-                    onClick={() => alert("Aceptar invitación (por implementar)")}
+                    onClick={() =>
+                      handleAcceptInvite(n.payload?.invitationToken)
+                    }
                     className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
                   >
                     Aceptar
                   </button>
+
                   <button
-                    onClick={() => alert("Rechazar invitación (por implementar)")}
+                    onClick={() =>
+                      handleRejectInvite(n.payload?.invitationToken)
+                    }
                     className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
                   >
                     Rechazar

@@ -6,6 +6,13 @@ interface Props {
   onClose: () => void;
 }
 
+const creatorOptions = [
+  { id: "técnico", label: "Cocreador Técnico" },
+  { id: "administrador", label: "Cocreador Administrador" },
+  { id: "visual", label: "Cocreador Visual" },
+  { id: "experto", label: "Cocreador Especialista" },
+];
+
 const ApplyCreatorModal: React.FC<Props> = ({ repoId, onClose }) => {
   const [creatorType, setCreatorType] = useState("técnico");
   const [aporte, setAporte] = useState("");
@@ -25,14 +32,19 @@ const ApplyCreatorModal: React.FC<Props> = ({ repoId, onClose }) => {
 
     try {
       setLoading(true);
-      await applyAsCreator(repoId, {
-        creatorType,
-        aporte,
-        motivacion,
-        tipoAporte,
-        disponibilidadHoras: parseInt(disponibilidadHoras),
-        urlPortafolio,
-      }, token);
+
+      await applyAsCreator(
+        repoId,
+        {
+          creatorType, // Mantiene backend correcto
+          aporte,
+          motivacion,
+          tipoAporte,
+          disponibilidadHoras: parseInt(disponibilidadHoras),
+          urlPortafolio,
+        },
+        token
+      );
 
       alert("Solicitud enviada correctamente.");
       onClose();
@@ -46,76 +58,95 @@ const ApplyCreatorModal: React.FC<Props> = ({ repoId, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl max-w-lg w-full">
-        <h2 className="text-xl font-semibold mb-2 text-[var(--color-primary)]">
-          Participar como Creador
+      <div className="bg-white p-6 rounded-2xl max-w-2xl w-full shadow-xl">
+        
+        {/* Título */}
+        <h2 className="text-2xl font-semibold mb-2 text-[var(--color-primary)]">
+          Participar como Cocreador
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
+
+        <p className="text-sm text-gray-600 mb-6">
           Aporta tus ideas, tiempo y conocimientos para impulsar este proyecto.
-          Solo necesitas llenar este formulario para aplicar.
+          Como Cocreador podrás colaborar directamente con el repositorio,
+          proponer mejoras y trabajar junto al equipo.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="text-sm font-medium">Tipo</label>
-            <select
-              className="w-full border rounded p-2 mt-1"
-              value={creatorType}
-              onChange={(e) => setCreatorType(e.target.value)}
-            >
-              <option value="técnico">Creador Técnico</option>
-              <option value="visual">Creador Visual</option>
-              <option value="administrador">Creador Administrador</option>
-              <option value="experto">Creador Experto</option>
-            </select>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* SELECTOR VISUAL DE TIPOS */}
+          <div className="flex gap-3 flex-wrap">
+            {creatorOptions.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setCreatorType(opt.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  creatorType === opt.id
+                    ? "bg-pink-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
+          {/* CAMPOS */}
           <input
             type="text"
-            className="w-full border rounded p-2"
+            className="w-full border rounded-lg p-3"
             placeholder="Descripción de tu aporte"
             value={aporte}
             onChange={(e) => setAporte(e.target.value)}
           />
-          <input
-            type="text"
-            className="w-full border rounded p-2"
+
+          <textarea
+            className="w-full border rounded-lg p-3 h-20"
             placeholder="Motivación personal"
             value={motivacion}
             onChange={(e) => setMotivacion(e.target.value)}
-          />
+          ></textarea>
+
           <input
             type="text"
-            className="w-full border rounded p-2"
+            className="w-full border rounded-lg p-3"
             placeholder="Tipo de aporte (horas, asesoría, etc.)"
             value={tipoAporte}
             onChange={(e) => setTipoAporte(e.target.value)}
           />
+
           <input
             type="number"
-            className="w-full border rounded p-2"
+            className="w-full border rounded-lg p-3"
             placeholder="Disponibilidad de horas"
             value={disponibilidadHoras}
             onChange={(e) => setDisponibilidadHoras(e.target.value)}
           />
+
           <input
             type="text"
-            className="w-full border rounded p-2"
+            className="w-full border rounded-lg p-3"
             placeholder="Portafolio (opcional)"
             value={urlPortafolio}
             onChange={(e) => setUrlPortafolio(e.target.value)}
           />
 
+          {/* BOTONES */}
           <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-3 py-2 border rounded">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
+            >
               Cancelar
             </button>
+
             <button
               type="submit"
               disabled={loading}
-              className="px-3 py-2 bg-pink-600 text-white rounded"
+              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
             >
-              {loading ? "Enviando..." : "Aceptar"}
+              {loading ? "Enviando…" : "Aceptar"}
             </button>
           </div>
         </form>
