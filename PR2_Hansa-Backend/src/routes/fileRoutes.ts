@@ -1,15 +1,28 @@
-import express from 'express';
-import multer from 'multer';
-import { uploadFile, getFilesByRepositoryId } from '../controllers/fileController';
-import { verifyToken } from '../middleware/auth';
+import express from "express";
+import multer from "multer";
+import { verifyToken } from "../middleware/auth";
+import {
+  uploadFile,
+  getFilesByRepositoryId,
+  getMyFiles,
+  downloadById,
+} from "../controllers/fileController";
 
 const router = express.Router();
 
-// Configuración de Multer con almacenamiento temporal
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-router.post('/upload', verifyToken, upload.single('file'), uploadFile); //✅·Correcto
-router.get('/myfiles/:repositoryId', verifyToken, getFilesByRepositoryId); // ✅ Correcto
+// Subir archivo a un repo
+router.post("/upload/:repoId", verifyToken, upload.single("file"), uploadFile);
+
+// Mis archivos (inicio)
+router.get("/my", verifyToken, getMyFiles);
+
+// Archivos por repo (metadatos en Mongo)
+router.get("/repo/:repoId", verifyToken, getFilesByRepositoryId);
+
+// Descargar por id (GridFS)
+router.get("/:id/download", verifyToken, downloadById);
 
 export default router;

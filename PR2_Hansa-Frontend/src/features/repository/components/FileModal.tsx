@@ -1,243 +1,253 @@
-import React, { useState,useCallback } from "react";
-import { useUser } from "../../../context/useUser";
-import { uploadFile } from "../services/filesService";
-import { useDropzone } from "react-dropzone";
-import { AiOutlineCloudUpload } from "react-icons/ai";
-import { FiX, FiUpload, FiStar } from "react-icons/fi";
+import React, { useState } from "react";
+import api from "../../../utils/api"; // usa tu instancia axios
+import { toast } from "sonner";
 
-interface ArchivoModalProps {
+interface Props {
+  repoId: string;
+  folderId?: string | null;
   onClose: () => void;
-  repositoryId: string;
-  onUploaded: () => void;
+  onSuccess: () => void;
 }
 
-const ArchivoModal: React.FC<ArchivoModalProps> = ({ onClose, repositoryId, onUploaded }) => {
-  const [fileName, setFileName] = useState("");
-  const [description, setDescription] = useState("");
-  const [importance, setImportance] = useState("none");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [privacy, setPrivacy] = useState("private");
-  const [file, setFile] = useState<File | null>(null);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const { user } = useUser();
+const FileModal: React.FC<Props> = ({ repoId, folderId, onClose, onSuccess }) => {
+  const token = localStorage.getItem("token");
 
-   const onDrop = useCallback((acceptedFiles: File[]) => {
-     if (acceptedFiles.length > 0) {
-       const selectedFile = acceptedFiles[0];
-       setFile(selectedFile);
-       setFileName(selectedFile.name);
-     }
-   }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    multiple: false,
-    maxFiles: 1,
+  const [fileData, setFileData] = useState({
+    title: "",
+    description: "",
+    importance: 0 as 0 | 1 | 2 | 3,
+    sensitive: false,
+    tags: [] as string[],
+    file: null as File | null,
   });
 
-  const handleSubmit = async () => {
-    if (!file) return alert("Selecciona un archivo.");
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("title", fileName);
-    formData.append("author", user?.username || "");
-    formData.append("description", description);
-    formData.append("importance", importance);
-    formData.append("tags", tags.join(","));
-    formData.append("privacy", privacy);
-    formData.append("file", file);
-    formData.append("repositoryId", repositoryId);
+  const [tagInput, setTagInput] = useState("");
 
-    try {
-      await uploadFile(formData);
-      alert("Archivo subido exitosamente.");
-      onUploaded();
-      onClose();
-    } catch (err) {
-      console.error(err);
-      alert("Error al subir el archivo.");
-    }
-    finally {
-      setIsUploading(false);
-    }
-  };
-
+  // 🔹 Agregar tag manualmente
   const handleAddTag = () => {
-    if (tagInput.trim() !== "" && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
+    if (tagInput.trim() !== "") {
+      setFileData((prev) => ({
+        ...prev,
+        tags: [...prev.tags, tagInput.trim()],
+      }));
       setTagInput("");
     }
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
+  // 🔹 Eliminar tag
+  const handleRemoveTag = (tag: string) => {
+    setFileData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tag),
+    }));
   };
 
-  const handleRemoveFile = () => {
-    setFile(null);
-    setFileName("");
+  // 🔹 Subir archivo
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!fileData.file) {
+      toast.error("Por favor selecciona un archivo.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileData.file);
+    formData.append("title", fileData.title);
+    formData.append("description", fileData.description);
+    formData.append("importance", String(fileData.importance));
+    formData.append("sensitive", String(fileData.sensitive));
+    formData.append("tags", JSON.stringify(fileData.tags));
+    
+    // Add folderId if uploading to a folder
+    if (folderId) {
+      formData.append("folderId", folderId);
+    }
+
+    try {
+      const res = await api.post(`/api/files/upload/${repoId}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res.status === 201) {
+        toast.success("Archivo subido correctamente ✅");
+        onSuccess();
+        onClose();
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Error al subir el archivo");
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-[var(--color-primary)]">Subir nuevo archivo</h2>
-                    <button
-                    onClick={onClose}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                    <FiX className="text-2xl" />
-                    </button>
-                </div>
-                <div className="mb-6">
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Seleccionar archivo</label>
-                    <div
-                    {...getRootProps()}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                        ${isDragActive ? "border-[var(--color-primarytwo)] bg-[var(--color-primaryfaint)]" : "border-gray-300 hover:border-[var(--color-primarytwo)]"}`}
-                    >
-                    <input {...getInputProps()} />
-                    <AiOutlineCloudUpload className="text-4xl mx-auto mb-4 text-[var(--color-primarytwo)]" />
-                    <p className="text-gray-600">
-                        {isDragActive ? "Suelta el archivo aquí" : "Arrastra un archivo aquí o haz clic para seleccionar"}
-                    </p>
-                    </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+      <div className="bg-white rounded-lg p-6 max-w-lg w-full relative shadow-lg animate-fadeIn">
+        {/* Botón cerrar */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-500 hover:text-black text-xl"
+        >
+          ✕
+        </button>
 
-                    {file && (
-                    <div className="mt-4 flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                            <FiUpload className="text-gray-600" />
-                        </div>
-                        <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                        <button
-                        onClick={handleRemoveFile}
-                        className="text-red-500 hover:text-red-700"
-                        >
-                        <FiX />
-                        </button>
-                    </div>
-                    )}
-                </div>
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-primary)]">
+          Agregar Archivo
+        </h2>
 
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción
-                    </label>
-                    <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe tu archivo"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={4}
-                    />
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Título */}
+          <input
+            type="text"
+            placeholder="Título del archivo"
+            value={fileData.title}
+            onChange={(e) =>
+              setFileData({ ...fileData, title: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
+            required
+          />
 
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Importancia
-                    </label>
-                    <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                        key={star}
-                        onClick={() => setImportance(star.toString())}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className={`text-2xl ${star <= (hoverRating || Number(importance)) ? "text-yellow-400" : "text-gray-300"}
-                            hover:text-yellow-400 transition-colors`}
-                        >
-                        <FiStar className="fill-current" />
-                        </button>
-                    ))}
-                    </div>
-                </div>
+          {/* Descripción */}
+          <textarea
+            placeholder="Descripción (opcional)"
+            value={fileData.description}
+            onChange={(e) =>
+              setFileData({ ...fileData, description: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
+          />
 
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Etiquetas
-                    </label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                    {tags.map(tag => (
-                        <span
-                        key={tag}
-                        className="bg-[var(--color-primaryfaint)] text-[var(--color-primary)] px-3 py-1 rounded-full text-sm flex items-center gap-1"
-                        >
-                        {tag}
-                        <button onClick={() => handleRemoveTag(tag)} className="hover:text-[var(--color-primary-hover)]">
-                            <FiX />
-                        </button>
-                        </span>
-                    ))}
-                    </div>
-                    <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-                        placeholder="Añadir etiqueta"
-                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <button
-                        onClick={handleAddTag}
-                        disabled={!tagInput || tags.length >= 5}
-                        className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
-                    >
-                        Añadir
-                    </button>
-                    </div>
-                </div>
-
-                <div className="mb-5">
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Privacidad</label>
-                    <div className="flex gap-4">
-                        <button type="button" onClick={() => setPrivacy("public")}
-                            className={`w-full py-2 rounded-lg font-semibold border ${privacy === "public" ? "bg-[var(--color-primarytwo)] text-white" : "border-[var(--color-primarytwo)] text-[var(--color-primary)]"}`}>
-                            Público
-                        </button>
-                        <button type="button" onClick={() => setPrivacy("private")}
-                            className={`w-full py-2 rounded-lg font-semibold border ${privacy === "private" ? "bg-[var(--color-primarytwo)] text-white" : "border-[var(--color-primarytwo)] text-[var(--color-primary)]"}`}>
-                            Privado
-                        </button>
-                    </div>
-                </div>
-
-                <div className="mt-8 flex justify-end gap-4">
-                    <button
-                    onClick={onClose}
-                    className="px-6 py-2 text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                    Cancelar
-                    </button>
-                    <button
-                    onClick={handleSubmit}
-                    disabled={isUploading}
-                    className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50
-                        flex items-center gap-2"
-                    >
-                    {isUploading ? (
-                        <>
-                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                        Subiendo...
-                        </>
-                    ) : (
-                        <>Subir Archivo</>
-                    )}
-                    </button>
-                </div>
-
+          {/* Importancia */}
+          <div>
+            <p className="font-medium mb-1">Importancia:</p>
+            <div className="flex items-center gap-3">
+              {[0, 1, 2, 3].map((lvl) => (
+                <div
+                  key={lvl}
+                  onClick={() =>
+                    setFileData({ ...fileData, importance: lvl as 0 | 1 | 2 | 3 })
+                  }
+                  className={`w-6 h-6 rounded-full cursor-pointer transition-all border-2 ${
+                    lvl === 0
+                      ? "bg-gray-400"
+                      : lvl === 1
+                      ? "bg-green-500"
+                      : lvl === 2
+                      ? "bg-orange-400"
+                      : "bg-red-500"
+                  } ${fileData.importance === lvl ? "ring-2 ring-black" : ""}`}
+                  title={
+                    lvl === 0
+                      ? "Baja"
+                      : lvl === 1
+                      ? "Media"
+                      : lvl === 2
+                      ? "Alta"
+                      : "Crítica"
+                  }
+                />
+              ))}
             </div>
-        </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <p className="font-medium mb-1">Etiquetas:</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Añadir etiqueta"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                className="flex-grow border rounded px-3 py-2"
+              />
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="px-3 py-2 bg-[var(--color-primary)] text-white rounded hover:opacity-90"
+              >
+                +
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {fileData.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-sm flex items-center gap-1"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-red-500 font-bold"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Sensible */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={fileData.sensitive}
+              onChange={(e) =>
+                setFileData({ ...fileData, sensitive: e.target.checked })
+              }
+              className="h-4 w-4"
+            />
+            <label className="text-sm text-gray-700">Archivo sensible</label>
+          </div>
+
+          {/* Selector de archivo */}
+          <div className="flex flex-col items-start gap-2">
+            <label className="font-medium">Archivo:</label>
+            <label className="cursor-pointer bg-[var(--color-primary)] text-white px-4 py-2 rounded hover:opacity-90 transition">
+              Seleccionar Archivo
+              <input
+                type="file"
+                hidden
+                onChange={(e) =>
+                  setFileData({
+                    ...fileData,
+                    file: e.target.files ? e.target.files[0] : null,
+                  })
+                }
+              />
+            </label>
+            {fileData.file && (
+              <p className="text-sm text-gray-600 mt-1">
+                📄 {fileData.file.name}
+              </p>
+            )}
+          </div>
+
+          {/* Botones */}
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:opacity-90"
+            >
+              Subir Archivo
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-    
   );
 };
 
-export default ArchivoModal;
+export default FileModal;

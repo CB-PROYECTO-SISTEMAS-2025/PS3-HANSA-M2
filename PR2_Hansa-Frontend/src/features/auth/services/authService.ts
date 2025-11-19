@@ -1,22 +1,39 @@
 import api from '../../../utils/api';
 
-export const verifyCode = async (username: string, code: string) => {
-  const response = await api.post("api/auth/verifyCode", { username, code });
-  return response.data;
-};
-
+/** 🔹 LOGIN */
 export const login = async (username: string, password: string) => {
-  const url = 'api/auth/login';
-  console.log('🌐 Enviando petición de login a:', url);
-  console.log('🌐 URL completa:', `${import.meta.env.VITE_API_BASE_URL}/${url}`);
-  console.log('🌐 Datos enviados:', { username, password: '***' });
-  
-  const response = await api.post(url, { username, password });
-  console.log('✅ Respuesta completa:', response);
-  return response.data;
+  const { data } = await api.post("/api/auth/login", { username, password });
+  return data;
 };
 
+/** 🔹 REGISTRO */
 export const register = async (email: string, username: string, password: string) => {
-  const response = await api.post("api/auth/register", { email, username, password });
-  return response.data;
+  const { data } = await api.post("/api/auth/register", { email, username, password });
+  return data;
+};
+
+/** 🔹 VERIFICAR CÓDIGO 2FA */
+export const verifyCode = async (username: string, code: string) => {
+  const { data } = await api.post("/api/auth/verify-code", { username, code });
+  return data;
+};
+
+/** 🔹 REENVIAR CÓDIGO 2FA */
+
+export const resendVerifyCode = async (username: string) => {
+  const { data } = await api.post("/api/auth/verifyCode/resend", { username });
+  return data;
+};
+
+
+/** 🔹 SOLICITAR RESTABLECIMIENTO DE CONTRASEÑA */
+export const requestPasswordReset = async (email: string) => {
+  const { data } = await api.post("/api/auth/request-reset", { email });
+  return data;
+};
+
+/** 🔹 RESTABLECER CONTRASEÑA CON TOKEN */
+export const resetPassword = async (token: string, password: string) => {
+  const { data } = await api.post("/api/auth/reset-password", { token, password });
+  return data;
 };

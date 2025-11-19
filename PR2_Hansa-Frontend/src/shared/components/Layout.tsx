@@ -28,7 +28,7 @@ const Layout: React.FC = () => {
         </button>
 
         {/* Rutas hijas */}
-        <main className="p-6">
+        <main>
           <Outlet />
         </main>
       </div>
