@@ -5,8 +5,6 @@ import './index.css'
 import App from './App.tsx'
 import { UserProvider } from './context/UserProvider.tsx'
 
-console.log('🚀 Aplicación iniciando...');
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <UserProvider>

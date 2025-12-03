@@ -1,4 +1,5 @@
 import React from "react";
+import { ASSETS } from "../../../config/assets";
 
 
 interface AuthLayoutProps {
@@ -11,7 +12,15 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
       <div className="flex flex-col md:flex-row h-full w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primarytwo)]">
           <div className="w-full h-full flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-500 ease-in-out">
-            <img src="/src/assets/logoUnivalleBlanco.png" alt="Logo Univalle" className="w-64 h-64"/>
+            <img 
+              src={ASSETS.LOGO_WHITE} 
+              alt="Logo Univalle" 
+              className="w-64 h-64 object-contain"
+              onError={(e) => {
+                // Fallback a logo local si Cloudinary falla
+                e.currentTarget.src = "/src/assets/logoUnivalleBlanco.png";
+              }}
+            />
             <p className="px-14 text-white text-sm md:text-lg mt-6">
               Tu plataforma académica para organizar, compartir y colaborar en tus archivos de estudio.
             </p>

@@ -1,11 +1,24 @@
-// src/routes/authRoutes.ts
-import express from 'express';
-import { register, login, verifyCode } from '../controllers/authController';
+import express from "express";
+import {
+  register,
+  login,
+  verifyCode,
+  resendCode,             // 👈 agrega esto
+  requestPasswordReset,
+  resetPassword,
+} from "../controllers/authController";
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/verifyCode', verifyCode);
+router.post("/register", register);
+router.post("/login", login);
+router.post("/verify-code", verifyCode);
+
+// 👇 Nueva ruta para reenviar código 2FA
+router.post("/verifyCode/resend", resendCode);
+
+
+router.post("/request-reset", requestPasswordReset);
+router.post("/reset-password", resetPassword);
 
 export default router;

@@ -10,6 +10,7 @@ const universidades = [
   "EMI (Escuela Militar de Ingeniería)",
 ];
 
+/*
 const hobbiesDisponibles = [
   "Lectura",
   "Música",
@@ -22,6 +23,7 @@ const hobbiesDisponibles = [
   "Viajar",
   "Ciencia/Tecnología",
 ];
+*/
 
 const temas = [
   { id: "azul-morado", label: "Azul-Morado", color: "bg-gradient-to-r from-indigo-500 to-purple-500" },
@@ -38,7 +40,7 @@ export default function EditarPerfilPage() {
   // Estados
   const [nombre, setNombre] = useState("Pablo");
   const [apellidos, setApellidos] = useState("Gutierrez");
-  const [username, setUsername] = useState("Pablito");
+  const [username] = useState("Pablito");
   const [bio, setBio] = useState("Estudiante de Ingeniería de Sistemas apasionado por la tecnología y el desarrollo de software. Siempre aprendiendo algo nuevo.");
   const [universidad, setUniversidad] = useState(universidades[1]); // Univalle por defecto
   const [programa, setPrograma] = useState("Ingeniería de Sistemas");
@@ -137,7 +139,18 @@ export default function EditarPerfilPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <input className="border rounded-lg p-2" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre" />
             <input className="border rounded-lg p-2" value={apellidos} onChange={(e) => setApellidos(e.target.value)} placeholder="Apellidos" />
-            <input className="border rounded-lg p-2" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nombre de usuario" />
+            <div className="relative group">
+              <input 
+                className="border-2 border-amber-300 bg-amber-50 rounded-lg p-2 w-full cursor-not-allowed text-gray-600" 
+                value={username} 
+                disabled
+                placeholder="Nombre de usuario"
+                title="No se puede cambiar el username porque se utiliza para login"
+              />
+              <div className="absolute left-0 -top-14 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-lg z-10">
+                ⚠️ No se puede cambiar el username porque se utiliza para login
+              </div>
+            </div>
             <textarea className="border rounded-lg p-2 md:col-span-2" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Biografía" />
           </div>
 

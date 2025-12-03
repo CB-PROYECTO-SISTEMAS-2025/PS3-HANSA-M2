@@ -151,8 +151,8 @@ useEffect(() => {
         {showModal && repositoryId && (
           <ArchivoModal
             onClose={() => setShowModal(false)}
-            repositoryId={repositoryId}
-            onUploaded={handleUploaded}
+            repoId={repositoryId}
+            onSuccess={handleUploaded}
           />
         )}
   

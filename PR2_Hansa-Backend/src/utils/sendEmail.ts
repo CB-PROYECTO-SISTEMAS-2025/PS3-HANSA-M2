@@ -1,75 +1,44 @@
-import nodemailer from 'nodemailer';
+// import fetch from 'node-fetch'; // No necesario, usar fetch nativo de Node 18+
+import { env } from '../config/env';
+import { verificationCodeTemplate } from '../templates/emailTemplates';
 
-export const sendVerificationEmail = async (to: string, code: string) => {
-  console.log('📧 Configurando envío de correo...');
-  console.log('📧 EMAIL_USER configurado:', !!process.env.EMAIL_USER);
-  console.log('📧 EMAIL_PASS configurado:', !!process.env.EMAIL_PASS);
-
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error('EMAIL_USER y EMAIL_PASS deben estar configurados');
-  }
-
-  console.log('📧 Creando transporter...');
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    logger: true,   // agrega logs
-    debug: true,    // más detalles de la conexión SMTP
-  });
-
-
-  const mailOptions = {
-    from: `"Hansa Sistema" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: 'Código de verificación - Hansa',
-    text: `Tu código de verificación es: ${code}\n\nEste código expira en 10 minutos.`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #9D0045;">Código de verificación</h2>
-        <p>Tu código de verificación es:</p>
-        <div style="background-color: #f8dee8; padding: 20px; text-align: center; margin: 20px 0;">
-          <h1 style="color: #9D0045; font-size: 32px; margin: 0;">${code}</h1>
-        </div>
-        <p><strong>Este código expira en 10 minutos.</strong></p>
-        <p>Si no solicitaste este código, puedes ignorar este correo.</p>
-      </div>
-    `,
-  };
-
-  console.log('📧 Enviando correo...');
-  console.log('📧 Destinatario:', to);
-  console.log('📧 Código:', code);
-  console.log('📧 Opciones de correo:', {
-    from: mailOptions.from,
-    to: mailOptions.to,
-    subject: mailOptions.subject
-  });
-
+export const sendVerificationEmail = async (to: string, code: string, username: string = 'Usuario') => {
   try {
-    console.log('📧 Intentando enviar correo...');
+    console.log('[sendEmail] BREVO_API_KEY presente:', !!env.BREVO_API_KEY);
+    console.log('[sendEmail] BREVO_API_KEY length:', env.BREVO_API_KEY?.length);
+    console.log('[sendEmail] BREVO_FROM_EMAIL:', env.BREVO_FROM_EMAIL);
+    
+    const htmlContent = verificationCodeTemplate(code, username);
+    const textContent = `Hola ${username}, tu código de verificación es: ${code}. Este código expira en 5 minutos.`;
 
-    // Crear una promesa con timeout
-    const sendPromise = transporter.sendMail(mailOptions);
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout al enviar correo')), 50000)
-    );
-
-    const result = await Promise.race([sendPromise, timeoutPromise]);
-    console.log('📧 Correo enviado exitosamente:');
-    console.log('📧 Respuesta completa:', result);
-    return result;
-  } catch (error: any) {
-    console.error('📧 Error al enviar correo:', error);
-    console.error('📧 Detalles del error:', {
-      message: error?.message || 'Error desconocido',
-      code: error?.code || 'Sin código',
-      response: error?.response || 'Sin respuesta'
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": env.BREVO_API_KEY,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: {
+          name: env.BREVO_FROM_NAME,
+          email: env.BREVO_FROM_EMAIL,
+        },
+        to: [{ email: to }],
+        subject: '🔐 Tu código de verificación - Univalle',
+        htmlContent,
+        textContent,
+      }),
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[sendEmail] Error de Brevo:', error);
+      throw new Error(`Error al enviar email de verificación: ${error}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('[sendEmail] Error completo:', error);
     throw error;
   }
 };

@@ -1,16 +1,19 @@
-import winston from 'winston';
+// src/utils/logger.ts
+import winston from "winston";
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [new winston.transports.Console()],
+const { combine, timestamp, printf, colorize } = winston.format;
+
+const fmt = printf(({ level, message, timestamp }) => `${timestamp} [${level}] ${message}`);
+
+export const logger = winston.createLogger({
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  format: combine(timestamp(), fmt),
+  transports: [
+    new winston.transports.Console({
+      format: combine(colorize(), timestamp(), fmt),
+    }),
+  ],
 });
 
-// Añade esta propiedad para compatibilidad con Morgan
-logger.stream = {
-  write: (message: string) => {
-    logger.info(message.trim());
-  },
-} as any;
-
-export { logger };
+// Atajos opcionales
+(logger as any).http = (msg: string) => logger.info(msg);

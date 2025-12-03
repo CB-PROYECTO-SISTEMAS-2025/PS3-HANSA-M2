@@ -1,23 +1,36 @@
-import api from '../../../utils/api';
-import { File } from '../types/file';
+import api from "../../../utils/api";
+import { File } from "../types/file";
 
-export const fetchPersonalRepositoryId = async (): Promise<string> => {
-  const response = await api.get("api/repositorios/personal");
-  return response.data.personalRepoId;
-};
-
-export const fetchPersonalFiles = async (): Promise<File[]> => {
-  const response = await api.get("api/files/personal");
+export const fetchFilesByRepositoryId = async (repositoryId: string): Promise<File[]> => {
+  const response = await api.get(`api/files/repo/${repositoryId}`);
   return response.data;
 };
 
-export const uploadFile = async (formData: FormData): Promise<void> => {
-  await api.post("api/files/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+// 🔽 NUEVA FUNCIÓN: descarga un archivo
+export const downloadFileById = async (fileId: string, filename?: string) => {
+  // Usar la instancia `api` para respetar la `baseURL` y los headers (token)
+  const response = await api.get(`/api/files/${fileId}/download`, {
+    responseType: "blob",
   });
+
+  if (!response || response.status >= 400) throw new Error("Error al descargar archivo");
+
+  // Convierte la respuesta a blob (binario)
+  const blob = response.data;
+
+  // Crea un enlace temporal para descargar
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "archivo";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 };
 
-export const fetchFilesByRepositoryId = async (repositoryId: string): Promise<File[]> => {
-  const response = await api.get(`api/files/myfiles/${repositoryId}`);
+// Eliminar archivo
+export const deleteFileById = async (fileId: string) => {
+  const response = await api.delete(`/api/files/${fileId}`);
   return response.data;
 };

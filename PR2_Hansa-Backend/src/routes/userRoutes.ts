@@ -1,53 +1,45 @@
-import express from 'express';
-import User from '../models/User';
+import express from "express";
+import multer from "multer";
+import { verifyToken } from "../middleware/auth";
+import {
+  listPublicUsers,
+  getMyProfile,
+  getUserProfile,
+  updateUserProfile,
+  uploadProfileImage,
+} from "../controllers/userController";
 
 const router = express.Router();
 
-// Actualizar perfil de usuario
-router.put('/:id', async (req, res) => {
-  try {
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          nombre: req.body.nombre,
-          apellido: req.body.apellido,
-          estado: req.body.estado,
-          profesion: req.body.profesion,
-          institucion: req.body.institucion,
-          ciudad: req.body.ciudad,
-          contacto: req.body.contacto,
-          hobbies: req.body.hobbies,
-          profileImage: req.body.profileImage,
-        },
-      },
-      { new: true },
-    );
-
-    if (!updatedUser) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
-      return;
+// Configurar multer para manejar la subida de archivos en memoria
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB máximo
+  },
+  fileFilter: (req, file, cb) => {
+    // Solo aceptar imágenes
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos de imagen'));
     }
+  },
+});
 
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    console.error('Error al actualizar perfil:', error);
-    res.status(500).json({ error: 'Error al actualizar el perfil' });
-  }
-});
-// Obtener perfil de usuario por ID
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).lean();
-    if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
-      return;
-    }
-    res.json(user);
-  } catch (error) {
-    console.error('Error al obtener perfil:', error);
-    res.status(500).json({ error: 'Error al obtener el perfil' });
-  }
-});
+// 🔹 Perfil propio (autenticado)
+router.get("/me", verifyToken, getMyProfile);
+
+// 🔹 Subir/actualizar foto de perfil
+router.post("/me/upload-image", verifyToken, upload.single('profileImage'), uploadProfileImage);
+
+// 🔹 Listar usuarios públicos
+router.get("/", listPublicUsers);
+
+// 🔹 Obtener perfil por ID (respeta privacidad en frontend)
+router.get("/:id", getUserProfile);
+
+// 🔹 Actualizar perfil (solo dueño)
+router.put("/:id", verifyToken, updateUserProfile);
 
 export default router;

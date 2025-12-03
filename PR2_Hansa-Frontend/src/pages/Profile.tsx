@@ -1,186 +1,276 @@
-import { JSX, useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  FiArrowLeft,
-  FiEdit,
-  FiHardDrive,
-  FiStar,
-  FiBook,
-  FiMusic,
-  FiCode,
-  FiAward,
-} from "react-icons/fi";
+import { motion } from "framer-motion";
+import { FiEdit2, FiMapPin, FiBook, FiAward, FiTrendingUp } from "react-icons/fi";
+import { getMyProfile } from "../services/userProfileService";
 
-const VistaPerfil = () => {
+interface User {
+  _id: string;
+  nombre?: string;
+  apellido?: string;
+  username: string;
+  bio?: string;
+  profileImage?: string;
+  hobbies?: string[];
+  userType?: string;
+  student?: { institucion?: string; carrera?: string; nivel?: string };
+  repoCount?: number;
+  fileCount?: number;
+  profileStyles?: string[];
+}
+
+const ProfilePage: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  type Perfil = {
-    nombre: string;
-    apellido: string;
-    estado: string;
-    profesion: string;
-    institucion: string;
-    ciudad: string;
-    contacto: string;
-    hobbies: string[];
-    profileImage: string;
+  const token = localStorage.getItem("token");
+
+  const temas: Record<string, string> = {
+    "univalle": "from-[#9D0045] to-[#C73872]",
+    "ocean": "from-blue-500 to-cyan-400",
+    "sunset": "from-pink-500 to-orange-400",
+    "forest": "from-emerald-400 to-teal-500",
+    "night": "from-gray-800 to-gray-600",
+    "passion": "from-rose-500 to-red-500",
+    "purple": "from-purple-500 to-indigo-600",
+    "mint": "from-green-400 to-emerald-500",
   };
 
-  const [perfil, setPerfil] = useState<Perfil>({
-    nombre: "",
-    apellido: "",
-    estado: "",
-    profesion: "",
-    institucion: "",
-    ciudad: "",
-    contacto: "",
-    hobbies: [],
-    profileImage: "",
-  });
-
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const userId = user.id;
-    if (userId) {
-      fetch(`http://localhost:5000/api/users/${userId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setPerfil({
-            nombre: data.nombre || "",
-            apellido: data.apellido || "",
-            estado: data.estado || "",
-            profesion: data.profesion || "",
-            institucion: data.institucion || "",
-            ciudad: data.ciudad || "",
-            contacto: data.contacto || "",
-            hobbies: data.hobbies || [],
-            profileImage: data.profileImage || "",
-          });
-        })
-        .catch((err) => console.error("Error al cargar perfil:", err));
-    }
+    const fetchProfile = async () => {
+      if (!token) {
+        alert("Debes iniciar sesión para ver tu perfil.");
+        navigate("/login");
+        return;
+      }
+      try {
+        setLoading(true);
+        const data = await getMyProfile(token);
+        setUser(data);
+      } catch (err) {
+        console.error("❌ Error al cargar perfil:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
   }, []);
 
-  return (
-    <div className="max-w-6xl mx-auto rounded-md overflow-hidden shadow-xl border border-gray-200">
-      {/* Header */}
-      <div className="bg-[var(--color-primary)] text-white px-6 py-4 flex justify-between items-center">
-        <button
-          onClick={() => navigate("/file-repository")}
-          className="flex items-center bg-[var(--color-primary)] bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-md transition"
-        >
-          <FiArrowLeft className="mr-2" />
-          Volver al Inicio
-        </button>
-        <div className="text-right">
-          <p className="text-sm opacity-80">Institución Académica</p>
-          <p className="font-semibold">
-            {perfil.institucion || "Actualiza tu perfil"}
-          </p>
-        </div>
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-primary)] mx-auto"></div>
+        <p className="mt-4 text-gray-600 font-medium">Cargando perfil...</p>
       </div>
+    </div>
+  );
+  
+  if (!user) return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <p className="text-center text-gray-600">No se encontró tu perfil</p>
+    </div>
+  );
 
-      <div className="flex flex-col md:flex-row bg-white">
-        {/* Perfil */}
-        <div className="md:w-1/3 p-6 border-r border-gray-200 flex flex-col items-center">
-          <img
-            src={perfil.profileImage || "https://via.placeholder.com/150?text=Sin+foto"}
-            alt="Perfil"
-            className="w-40 h-40 rounded-full object-cover border-4 border-[var(--color-primary)] shadow"
-          />
-          <h1 className="text-2xl font-bold mt-4 text-gray-800 text-center">
-            {perfil.nombre || "Actualiza tu perfil"}
-          </h1>
-          <h2 className="text-lg text-gray-600 text-center">
-            {perfil.apellido || "Actualiza tu perfil"}
-          </h2>
-          <p className="text-sm mt-2 text-gray-500">
-            📍 {perfil.ciudad || "Actualiza tu perfil"}
-          </p>
-          <p className="text-sm text-gray-500">
-            👨‍💻 {perfil.profesion || "Actualiza tu perfil"}
-          </p>
+  const temaUsuario = user.profileStyles?.[0] || "univalle";
+  const gradienteTema = temas[temaUsuario] || temas["univalle"];
 
-          <button
-            onClick={() => navigate("/editar-perfil")}
-            className="mt-6 flex items-center bg-[var(--color-primary)] text-white px-5 py-2 rounded-full hover:bg-pink-700 transition"
-          >
-            <FiEdit className="mr-2" />
-            Editar perfil
-          </button>
-        </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Header con gradiente personalizado */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`relative bg-gradient-to-r ${gradienteTema} rounded-3xl shadow-2xl overflow-hidden mb-6`}
+        >
+          {/* Patrón decorativo */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
+          </div>
 
-        {/* Contenido derecho */}
-        <div className="md:w-2/3 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <FiStar className="mr-2 text-yellow-500" />
-            Gustos / Hobbies
-          </h3>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {(perfil.hobbies?.length ? perfil.hobbies : ["Actualiza tu perfil"]).map((label, i) => {
-              const icons: { [key: string]: JSX.Element } = {
-                Lectura: <FiBook />,
-                Música: <FiMusic />,
-                Competencias: <FiAward />,
-                Programación: <FiCode />,
-                "Actualiza tu perfil": <FiStar />,
-              };
-
-              return (
-                <div
-                  key={i}
-                  className="bg-pink-100 hover:bg-pink-200 text-[var(--color-primary)] p-3 rounded-lg flex flex-col items-center shadow transition"
-                >
-                  <div className="text-xl mb-1">{icons[label] || <FiStar />}</div>
-                  <span className="text-sm font-medium">{label}</span>
+          <div className="relative px-6 sm:px-10 py-8 sm:py-12">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              
+              {/* Avatar */}
+              <motion.div 
+                whileHover={{ scale: 1.05, rotate: 3 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="relative"
+              >
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-white p-1.5 shadow-2xl">
+                  <img
+                    src={user.profileImage || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                    alt="Perfil"
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
-              );
-            })}
+                <motion.div 
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg cursor-pointer"
+                  onClick={() => navigate("/editProfile")}
+                >
+                  <FiEdit2 className="w-4 h-4 text-[var(--color-primary)]" />
+                </motion.div>
+              </motion.div>
+
+              {/* Info básica */}
+              <div className="flex-1 text-center sm:text-left">
+                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                  {user.nombre} {user.apellido}
+                </h1>
+                <p className="text-[var(--color-primaryfaint)] text-lg font-medium mb-3">
+                  @{user.username}
+                </p>
+                <p className="text-white/90 text-base max-w-2xl leading-relaxed">
+                  {user.bio || "Sin biografía"}
+                </p>
+
+                {/* Info académica en el header */}
+                {user.student && (
+                  <div className="mt-4 flex flex-wrap gap-4 justify-center sm:justify-start text-white/90">
+                    <div className="flex items-center gap-2">
+                      <FiBook className="w-4 h-4" />
+                      <span className="text-sm">{user.student.carrera}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FiMapPin className="w-4 h-4" />
+                      <span className="text-sm">{user.student.institucion}</span>
+                    </div>
+                    {user.student.nivel && (
+                      <div className="flex items-center gap-2">
+                        <FiAward className="w-4 h-4" />
+                        <span className="text-sm">{user.student.nivel}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Botón editar (desktop) */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/editProfile")}
+                className="hidden sm:block bg-white text-[var(--color-primary)] px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+              >
+                <FiEdit2 className="inline mr-2" />
+                Editar Perfil
+              </motion.button>
+            </div>
           </div>
+        </motion.div>
 
-          {/* Almacenamiento */}
-          <h4 className="text-md font-medium text-gray-700 mb-4 flex items-center">
-            <FiHardDrive className="mr-2" />
-            Almacenamiento (Plan Gratuito)
-          </h4>
+        {/* Estadísticas */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6"
+        >
+          {[
+            { label: "Repositorios", value: user.repoCount ?? 0, icon: "📁", color: "from-blue-500 to-blue-600" },
+            { label: "Archivos", value: user.fileCount ?? 0, icon: "📄", color: "from-green-500 to-green-600" },
+            { label: "Colaboraciones", value: 4, icon: "🤝", color: "from-purple-500 to-purple-600" },
+            { label: "Progreso", value: "85%", icon: "📈", color: "from-orange-500 to-orange-600" }
+          ].map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 + index * 0.05 }}
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 relative overflow-hidden group"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
+              <div className="relative">
+                <div className="text-3xl mb-2">{stat.icon}</div>
+                <p className="text-3xl font-bold bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primarytwo)] bg-clip-text text-transparent">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-gray-600 font-medium mt-1">{stat.label}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
-          <div className="flex items-center">
-            <div className="relative w-24 h-24 mr-6">
-              <svg className="w-full h-full" viewBox="0 0 36 36">
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="3"
-                />
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#be185d"
-                  strokeWidth="3"
-                  strokeDasharray="80, 100"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xl font-bold text-gray-700">80%</span>
+        {/* Hobbies e Intereses */}
+        {user.hobbies && user.hobbies.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6"
+          >
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span>🎯</span> Intereses y Hobbies
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {user.hobbies.map((hobby, index) => (
+                <motion.span
+                  key={hobby}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + index * 0.05 }}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  className="bg-gradient-to-r from-[var(--color-primaryfaint)] to-pink-100 text-[var(--color-primary)] px-5 py-2.5 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all cursor-default"
+                >
+                  {hobby}
+                </motion.span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Sección adicional - Actividad reciente (placeholder) */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl shadow-lg p-6 sm:p-8"
+        >
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <FiTrendingUp className="text-[var(--color-primary)]" />
+            Actividad Reciente
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primarytwo)] rounded-full flex items-center justify-center text-white font-bold">
+                📝
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-800">Subiste un nuevo archivo</p>
+                <p className="text-sm text-gray-500">Hace 2 horas</p>
               </div>
             </div>
-
-            <div>
-              <p className="text-sm text-gray-500">80 GB de 100 GB usados</p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div
-                  className="bg-[var(--color-primary)] h-2 rounded-full"
-                  style={{ width: "80%" }}
-                ></div>
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                🤝
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-800">Te uniste a un repositorio</p>
+                <p className="text-sm text-gray-500">Hace 1 día</p>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Botón editar (mobile) */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate("/editProfile")}
+          className="sm:hidden w-full mt-6 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primarytwo)] text-white px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+        >
+          <FiEdit2 className="w-5 h-5" />
+          Editar Perfil
+        </motion.button>
+
       </div>
     </div>
   );
 };
 
-export default VistaPerfil;
+export default ProfilePage;
